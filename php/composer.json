@@ -1,0 +1,25 @@
+{
+    "name": "pjpawel/polars-tests",
+    "description": "Tests for Polars PHP bindings",
+    "version": "0.1.0",
+    "authors": [
+        {
+            "name": "pjpawel",
+            "email": "pawel.jan.podgorski@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\Polars\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test:debug": "php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit tests",
+        "test:release": "php -d extension=../target/release/libpolars_php.so vendor/bin/phpunit tests"
+    }
+}
