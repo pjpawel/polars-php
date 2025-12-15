@@ -11,8 +11,7 @@ namespace Polars {
 
         /**
          * Set columns names
-         * @param
-         * - length of list must be equal to current length of columns
+         * @param string[] $columns - length of list must be equal to current length of columns
          */
         public function setColumns(array $columns): mixed {}
 
@@ -64,7 +63,7 @@ namespace Polars {
         /**
          * Aggregate the columns of this DataFrame to their product value.
          */
-        public function std(?int $ddof): \Polars\DataFrame {}
+        public function std(int $ddof = 0): \Polars\DataFrame {}
 
         /**
          * Make select based on given expressions
@@ -100,7 +99,7 @@ namespace Polars {
         /**
          * Write to CSV file
          */
-        public function writeCsv(string $path, bool $includeHeader): mixed {}
+        public function writeCsv(string $path, bool $includeHeader = true): mixed {}
 
         /**
          * Create a new DataFrame from a PHP array
@@ -115,7 +114,7 @@ namespace Polars {
          * ]);
          * ```
          */
-        public function __construct(array $data, ?bool $by_keys) {}
+        public function __construct(array $data, bool $byKeys = true) {}
     }
 
     class Expr {
