@@ -8,9 +8,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 ext-php-rs = "0.15.2"
-polars = { version = "0.51.0", features = ["lazy", "csv", "parquet", "json"] }
-polars-lazy = "0.51.0"
-polars-plan = "0.51.0"
+polars = { version = "0.51.0", features = ["lazy", "csv", "parquet", "json"] } # , "timezones"
+polars-plan = { version = "0.51.0", features = ["mode", "is_between"] }
 
 [profile.release]
 strip = "debuginfo"

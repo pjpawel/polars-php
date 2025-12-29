@@ -19,7 +19,19 @@
         }
     },
     "scripts": {
+        "stubs:debug": "cd .. && cargo php stubs -o php/polars.stubs.php",
+        "build:debug":"cd .. && cargo build",
+        "build:release":"cd .. && cargo build --release",
         "test:debug": "php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit tests",
-        "test:release": "php -d extension=../target/release/libpolars_php.so vendor/bin/phpunit tests"
+        "test:release": "php -d extension=../target/release/libpolars_php.so vendor/bin/phpunit tests",
+        "all:debug": [
+            "@build:debug",
+            "@stubs:debug",
+            "@test:debug"
+        ],
+        "all:release": [
+            "@build:release",
+            "@test:release"
+        ]
     }
 }

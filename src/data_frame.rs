@@ -1,12 +1,11 @@
-use ext_php_rs::prelude::*;
-use polars::prelude::{Column, CsvWriter, DataFrame, IntoLazy, OptFlags, SerWriter};
-use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
-use ext_php_rs::flags::{DataType as PhpDataType};
-use polars_plan::dsl::{Expr};
 use crate::data_type::PolarsDataType;
 use crate::exception::{ExtResult, PolarsException};
 use crate::expression::PolarsExpr;
-
+use ext_php_rs::flags::DataType as PhpDataType;
+use ext_php_rs::prelude::*;
+use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
+use polars::prelude::{Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, OptFlags, SerReader, SerWriter};
+use polars_plan::dsl::Expr;
 
 fn parse_array_to_cols_by_keys(data: &ZendHashTable) -> ExtResult<Vec<Column>> {
     let mut columns = Vec::new();
@@ -20,7 +19,10 @@ fn parse_array_to_cols_by_keys(data: &ZendHashTable) -> ExtResult<Vec<Column>> {
         let arr: &ZendHashTable = match value.array() {
             Some(a) => a,
             None => {
-                return Err(PolarsException::new(format!("Column '{}' must be an array", col_name)));
+                return Err(PolarsException::new(format!(
+                    "Column '{}' must be an array",
+                    col_name
+                )));
             }
         };
 
@@ -41,7 +43,7 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
         Some(value) => value,
         None => {
             let col_values: Vec<Option<String>> = vec![None; 0];
-            return Ok(Column::new(name.into(), col_values))
+            return Ok(Column::new(name.into(), col_values));
         }
     };
     match first_value.get_type() {
@@ -51,15 +53,13 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
                 .map(|v: &Zval| v.bool()) // returns Option<bool>
                 .collect();
             Ok(Column::new(name.into(), col_values))
-        },
+        }
         PhpDataType::Long => {
             let col_values: Vec<Option<i64>> = values
                 .iter()
-                .map(|v: &Zval| {
-                    match v.long() {
-                        Some(v) => Some(v as i64),
-                        None => None
-                    }
+                .map(|v: &Zval| match v.long() {
+                    Some(v) => Some(v as i64),
+                    None => None,
                 })
                 .collect();
             Ok(Column::new(name.into(), col_values))
@@ -67,32 +67,28 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
         PhpDataType::Double => {
             let col_values: Vec<Option<f64>> = values
                 .iter()
-                .map(|v: &Zval| {
-                    match v.double() {
-                        Some(v) => Some(v as f64),
-                        None => None
-                    }
+                .map(|v: &Zval| match v.double() {
+                    Some(v) => Some(v as f64),
+                    None => None,
                 })
                 .collect();
             Ok(Column::new(name.into(), col_values))
         }
         PhpDataType::String => {
-            let col_values: Vec<Option<String>> = values
-                .iter()
-                .map(|v| v.string())
-                .collect();
+            let col_values: Vec<Option<String>> = values.iter().map(|v| v.string()).collect();
             Ok(Column::new(name.into(), col_values))
-        },
+        }
         PhpDataType::Null => {
             let col_values: Vec<Option<String>> = vec![None; values.len()];
             Ok(Column::new(name.into(), col_values))
         }
-        default => {
-            Err(PolarsException::new(format!("Unsupported type '{}' for column '{}'", first_value.get_type(), name)))
-        }
+        default => Err(PolarsException::new(format!(
+            "Unsupported type '{}' for column '{}'",
+            first_value.get_type(),
+            name
+        ))),
     }
 }
-
 
 #[php_class]
 #[php(name = "Polars\\DataFrame")]
@@ -104,7 +100,6 @@ pub struct PhpDataFrame {
 #[php_impl]
 #[php(change_method_case = "camelCase")]
 impl PhpDataFrame {
-
     /// Create a new DataFrame from a PHP array
     /// keys are column name
     ///
@@ -117,19 +112,25 @@ impl PhpDataFrame {
     /// ]);
     /// ```
     #[php(defaults(by_keys = true))]
-    pub fn __construct(data: &ZendHashTable, byKeys: bool) -> ExtResult<Self> {
+    pub fn __construct(
+        data: &ZendHashTable,
+        #[allow(non_snake_case)] byKeys: bool,
+    ) -> ExtResult<Self> {
         let col_vec = match data.is_empty() {
             true => Vec::new(),
-            false => match by_keys {
+            false => match byKeys {
                 true => parse_array_to_cols_by_keys(data)?,
-                false => return Err(PolarsException::new("Parsing data by first row header is currently not implemented".to_string()))
-            }
+                false => {
+                    return Err(PolarsException::new(
+                        "Parsing data by first row header is currently not implemented".to_string(),
+                    ));
+                }
+            },
         };
         let df = DataFrame::new(col_vec)
             .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
         Ok(Self { inner: df })
     }
-
 
     // Attributes //
 
@@ -169,7 +170,8 @@ impl PhpDataFrame {
 
     /// Get the shape of the DataFrame as [rows, columns]
     pub fn shape(&self) -> Vec<usize> {
-        vec![self.inner.height(), self.inner.width()]
+        let shape = self.inner.shape();
+        vec![shape.0, shape.1]
     }
 
     /// Get the number of columns
@@ -181,24 +183,42 @@ impl PhpDataFrame {
 
     /// Return the number of non-null elements for each column.
     pub fn count(&self) -> ExtResult<Self> {
-        let inner = match self.inner.clone().lazy()
+        let inner = match self
+            .inner
+            .clone()
+            .lazy()
             .count()
             .with_optimizations(OptFlags::EAGER)
-            .collect() {
+            .collect()
+        {
             Ok(v) => v,
-            Err(e) => return Err(PolarsException::new(format!("Cannot execute count operation: {}", e.to_string()))),
+            Err(e) => {
+                return Err(PolarsException::new(format!(
+                    "Cannot execute count operation: {}",
+                    e.to_string()
+                )));
+            }
         };
         Ok(Self { inner })
     }
 
     /// Aggregate the columns of this DataFrame to their maximum value.
     pub fn max(&self) -> ExtResult<Self> {
-        let inner = match self.inner.clone().lazy()
+        let inner = match self
+            .inner
+            .clone()
+            .lazy()
             .max()
             .with_optimizations(OptFlags::EAGER)
-            .collect() {
+            .collect()
+        {
             Ok(v) => v,
-            Err(e) => return Err(PolarsException::new(format!("Cannot execute max operation: {}", e.to_string()))),
+            Err(e) => {
+                return Err(PolarsException::new(format!(
+                    "Cannot execute max operation: {}",
+                    e.to_string()
+                )));
+            }
         };
         Ok(Self { inner })
     }
@@ -211,43 +231,67 @@ impl PhpDataFrame {
 
     /// Aggregate the columns of this DataFrame to their mean value.
     pub fn mean(&self) -> ExtResult<Self> {
-        let inner = match self.inner.clone().lazy()
+        let inner = match self
+            .inner
+            .clone()
+            .lazy()
             .mean()
             .with_optimizations(OptFlags::EAGER)
-            .collect() {
+            .collect()
+        {
             Ok(v) => v,
-            Err(e) => return Err(PolarsException::new(format!("Cannot execute min operation: {}", e.to_string()))),
+            Err(e) => {
+                return Err(PolarsException::new(format!(
+                    "Cannot execute min operation: {}",
+                    e.to_string()
+                )));
+            }
         };
         Ok(Self { inner })
     }
 
     /// Aggregate the columns of this DataFrame to their minimal value.
     pub fn min(&self) -> ExtResult<Self> {
-        let inner = match self.inner.clone().lazy()
+        let inner = match self
+            .inner
+            .clone()
+            .lazy()
             .min()
             .with_optimizations(OptFlags::EAGER)
-            .collect() {
-                Ok(v) => v,
-                Err(e) => return Err(PolarsException::new(format!("Cannot execute min operation: {}", e.to_string()))),
-            };
-        Ok(Self { inner })
-    }
-
-    /// Aggregate the columns of this DataFrame to their product value.
-    //#[php(defaults(ddof = 0))]
-    #[php(optional = ddof, defaults(ddof = "0"))]
-    pub fn std(&self, ddof: u8) -> ExtResult<Self> {
-        let inner = match self.inner.clone().lazy()
-            .std(ddof) //https://numpy.org/doc/stable/reference/generated/numpy.std.html#
-            .with_optimizations(OptFlags::EAGER)
-            .collect() {
+            .collect()
+        {
             Ok(v) => v,
-            Err(e) => return Err(PolarsException::new(format!("Cannot execute min operation: {}", e.to_string()))),
+            Err(e) => {
+                return Err(PolarsException::new(format!(
+                    "Cannot execute min operation: {}",
+                    e.to_string()
+                )));
+            }
         };
         Ok(Self { inner })
     }
 
-
+    /// Aggregate the columns of this DataFrame to their product value.
+    #[php(defaults(ddof = 0))]
+    pub fn std(&self, ddof: u8) -> ExtResult<Self> {
+        let inner = match self
+            .inner
+            .clone()
+            .lazy()
+            .std(ddof) //https://numpy.org/doc/stable/reference/generated/numpy.std.html#
+            .with_optimizations(OptFlags::EAGER)
+            .collect()
+        {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(PolarsException::new(format!(
+                    "Cannot execute min operation: {}",
+                    e.to_string()
+                )));
+            }
+        };
+        Ok(Self { inner })
+    }
 
     /// Make select based on given expressions
     /// @param \Polars\Expr[]
@@ -256,13 +300,16 @@ impl PhpDataFrame {
         for (_, value) in expressions.iter() {
             let expr: &PolarsExpr = match value.extract::<&PolarsExpr>() {
                 Some(expr) => expr,
-                None => return Err(PolarsException::new("Argument must be a list of \\Polars\\Expr objects".to_string()))
+                None => {
+                    return Err(PolarsException::new(
+                        "Argument must be a list of \\Polars\\Expr objects".to_string(),
+                    ));
+                }
             };
             exprs.push(expr.get_expr().clone());
         }
         self._do_select(exprs)
     }
-
 
     // Rows //
 
@@ -295,8 +342,6 @@ impl PhpDataFrame {
             inner: self.inner.clone(),
         }
     }
-
-
 
     // // /// Convert DataFrame to a PHP array
     // // /// Returns array of rows, each row is an associative array
@@ -337,15 +382,48 @@ impl PhpDataFrame {
         format!("{}", self.inner)
     }
 
-    /// Write to CSV file
-    #[php(defaults(include_headers = true))]
     #[allow(non_snake_case)]
-    pub fn write_csv(&self, path: String, includeHeader: bool) -> ExtResult<()> {
+    #[php(defaults(headerIncluded = true, separator = ",".to_string()))]
+    pub fn from_csv(
+        path: String,
+        headerIncluded: bool,
+        separator: String,
+    ) -> ExtResult<Self> {
+        if separator.len() != 1 {
+            return Err(PolarsException::new("Separator must of length 1".to_string()));
+        }
+        let df = CsvReadOptions::default()
+            .with_has_header(headerIncluded)
+            .with_parse_options(
+                CsvParseOptions::default()
+                    .with_try_parse_dates(true)
+                    .with_separator(separator.as_bytes().first().unwrap().to_owned())
+            )
+            .try_into_reader_with_file_path(Some(path.into()))
+            .map_err(|e| PolarsException::new(format!("Failed to read CSV: {}", e.to_string())))?
+            .finish()
+            .map_err(|e| PolarsException::new(format!("Failed to create df from CSV file: {}", e.to_string())))?;
+        Ok(Self { inner: df })
+    }
+
+    /// Write to CSV file
+    #[php(defaults(includeHeaders = true, separator = ','.to_string()))]
+    pub fn write_csv(
+        &self,
+        path: String,
+        #[allow(non_snake_case)] includeHeader: bool,
+        separator: String,
+    ) -> ExtResult<()> {
+        if separator.len() != 1 {
+            return Err(PolarsException::new("Separator must of length 1".to_string()));
+        }
+
         let mut file = std::fs::File::create(&path)
             .map_err(|e| PolarsException::new(format!("Failed to create file: {}", e)))?;
 
         CsvWriter::new(&mut file)
             .include_header(includeHeader)
+            .with_separator(*separator.as_bytes().first().unwrap())
             .finish(&mut self.inner.clone())
             .map_err(|e| PolarsException::new(format!("Failed to write CSV: {}", e)))?;
 
@@ -414,18 +492,19 @@ impl PhpDataFrame {
 
 /// Methods that are hidden from PHP stubs
 impl PhpDataFrame {
-
     fn _do_select(&self, exprs: Vec<Expr>) -> ExtResult<Self> {
-        match self.inner.clone().lazy()
+        match self
+            .inner
+            .clone()
+            .lazy()
             .select(&exprs)
             .with_optimizations(OptFlags::EAGER)
-            .collect() {
+            .collect()
+        {
             Ok(df) => Ok(df.into()),
-            Err(e) => Err(e.into())
+            Err(e) => Err(e.into()),
         }
     }
-
-
 }
 
 impl Into<PhpDataFrame> for DataFrame {
@@ -530,8 +609,6 @@ impl Into<PhpDataFrame> for DataFrame {
 //         format!("{}", self.inner)
 //     }
 // }
-
-
 
 // // Helper function to convert a Series value to Zval
 // fn series_value_to_zval(series: &Series, idx: usize) -> ExtResult<Zval> {
