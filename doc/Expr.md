@@ -203,7 +203,7 @@
 | to_physical            |                   | [ ]             | [ ]        |                                               |
 | top_k                  |                   | [ ]             | [ ]        |                                               |
 | top_k_by               |                   | [ ]             | [ ]        |                                               |
-| truediv                |                   | [ ]             | [ ]        |                                               |
+| truediv                | div               | [X]             | [ ]        |                                               |
 | unique                 |                   | [ ]             | [ ]        |                                               |
 | unique_counts          |                   | [ ]             | [ ]        |                                               |
 | upper_bound            |                   | [ ]             | [ ]        |                                               |
