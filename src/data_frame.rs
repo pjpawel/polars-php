@@ -1,6 +1,7 @@
 use crate::data_type::PolarsDataType;
 use crate::exception::{ExtResult, PolarsException};
 use crate::expression::PolarsExpr;
+use ext_php_rs::zend::ce;
 use ext_php_rs::flags::DataType as PhpDataType;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
@@ -92,6 +93,7 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
 
 #[php_class]
 #[php(name = "Polars\\DataFrame")]
+#[php(implements(ce = ce::arrayaccess, stub = "\\ArrayAccess"))]
 #[derive(Clone)]
 pub struct PhpDataFrame {
     pub inner: DataFrame,
@@ -111,7 +113,7 @@ impl PhpDataFrame {
     ///     'city' => ['NYC', 'LA', 'Chicago']
     /// ]);
     /// ```
-    #[php(defaults(by_keys = true))]
+    #[php(defaults(byKeys = true))]
     pub fn __construct(
         data: &ZendHashTable,
         #[allow(non_snake_case)] byKeys: bool,
@@ -130,6 +132,139 @@ impl PhpDataFrame {
         let df = DataFrame::new(col_vec)
             .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
         Ok(Self { inner: df })
+    }
+
+    // Array Access //
+
+    /// Check if an offset (column name) exists
+    /// Implements ArrayAccess::offsetExists
+    #[php(name = "offsetExists")]
+    pub fn offset_exists(&self, offset: &Zval) -> bool {
+        if let Some(col_name) = offset.string() {
+            return self.inner.get_column_names().iter().any(|c| c.as_str() == col_name);
+        }
+        if let Some(idx) = offset.long() {
+            let idx = if idx < 0 {
+                (self.inner.height() as i64 + idx) as usize
+            } else {
+                idx as usize
+            };
+            return idx < self.inner.height();
+        }
+        false
+    }
+
+    /// Get value at offset
+    /// Implements ArrayAccess::offsetGet
+    ///
+    /// Supports:
+    /// - String offset: returns single column as DataFrame
+    /// - Integer offset: returns single row as DataFrame
+    /// - Array of strings: returns DataFrame with specified columns
+    #[php(name = "offsetGet")]
+    pub fn offset_get(&self, offset: &Zval) -> ExtResult<Self> {
+        // Single column by name
+        if let Some(col_name) = offset.string() {
+            let col = self.inner.column(&col_name).map_err(|e| {
+                PolarsException::new(format!("Column '{}' not found: {}", col_name, e))
+            })?;
+            let df = DataFrame::new(vec![col.clone()]).map_err(|e| {
+                PolarsException::new(format!("Failed to create DataFrame: {}", e))
+            })?;
+            return Ok(Self { inner: df });
+        }
+
+        // Single row by index
+        if let Some(idx) = offset.long() {
+            let idx = if idx < 0 {
+                (self.inner.height() as i64 + idx) as usize
+            } else {
+                idx as usize
+            };
+            if idx >= self.inner.height() {
+                return Err(PolarsException::new(format!(
+                    "Row index {} out of bounds for DataFrame with {} rows",
+                    idx,
+                    self.inner.height()
+                )));
+            }
+            let df = self.inner.slice(idx as i64, 1);
+            return Ok(Self { inner: df });
+        }
+
+        // Multiple columns by array of names, optionally with row index
+        // Supports: $df[['col1', 'col2']] or $df[['col1', 'col2', 0]]
+        if let Some(arr) = offset.array() {
+            let col_names: Vec<String> = arr
+                .values()
+                .filter_map(|v| v.string())
+                .collect();
+
+            // Look for an integer (row index) in the array
+            let row_idx: Option<i64> = arr.values().find_map(|v| v.long());
+
+            if col_names.is_empty() {
+                return Err(PolarsException::new(
+                    "Array offset must contain at least one column name as string".to_string(),
+                ));
+            }
+
+            let cols: Result<Vec<Column>, _> = col_names
+                .iter()
+                .map(|name| {
+                    self.inner
+                        .column(name)
+                        .map(|c| c.clone())
+                        .map_err(|e| format!("Column '{}' not found: {}", name, e))
+                })
+                .collect();
+
+            let cols = cols.map_err(|e| PolarsException::new(e))?;
+            let mut df = DataFrame::new(cols).map_err(|e| {
+                PolarsException::new(format!("Failed to create DataFrame: {}", e))
+            })?;
+
+            // If row index is provided, slice to that row
+            if let Some(idx) = row_idx {
+                let idx = if idx < 0 {
+                    (df.height() as i64 + idx) as usize
+                } else {
+                    idx as usize
+                };
+                if idx >= df.height() {
+                    return Err(PolarsException::new(format!(
+                        "Row index {} out of bounds for DataFrame with {} rows",
+                        idx,
+                        df.height()
+                    )));
+                }
+                df = df.slice(idx as i64, 1);
+            }
+
+            return Ok(Self { inner: df });
+        }
+
+        Err(PolarsException::new(
+            "Offset must be a string (column name), integer (row index), or array of column names (optionally with row index)".to_string(),
+        ))
+    }
+
+    /// Set value at offset - not supported for DataFrames
+    /// Implements ArrayAccess::offsetSet
+    #[php(name = "offsetSet")]
+    pub fn offset_set(&mut self, _offset: &Zval, _value: &Zval) -> ExtResult<()> {
+        Err(PolarsException::new(
+            "DataFrame does not support item assignment. Use withColumn() or similar methods instead.".to_string(),
+        ))
+    }
+
+    /// Unset value at offset - not supported for DataFrames
+    /// Implements ArrayAccess::offsetUnset
+    #[php(name = "offsetUnset")]
+    pub fn offset_unset(&mut self, _offset: &Zval) -> ExtResult<()> {
+        Err(PolarsException::new(
+            "DataFrame does not support unsetting columns. Use drop() method instead.".to_string(),
+        ))
     }
 
     // Attributes //
@@ -330,6 +465,93 @@ impl PhpDataFrame {
     }
 
     // Miscellaneous //
+
+    /// Return the DataFrame as a scalar value
+    /// The DataFrame must contain exactly one element (1 row, 1 column)
+    pub fn item(&self) -> ExtResult<Zval> {
+        if self.inner.height() != 1 || self.inner.width() != 1 {
+            return Err(PolarsException::new(format!(
+                "DataFrame must have exactly one element to call item(). Got shape: ({}, {})",
+                self.inner.height(),
+                self.inner.width()
+            )));
+        }
+
+        let col = self.inner.get_columns().first().ok_or_else(|| {
+            PolarsException::new("Failed to get column".to_string())
+        })?;
+
+        let value = col.get(0).map_err(|e| {
+            PolarsException::new(format!("Failed to get value: {}", e))
+        })?;
+
+        let mut zval = Zval::new();
+        match value {
+            polars::prelude::AnyValue::Null => Ok(zval),
+            polars::prelude::AnyValue::Boolean(b) => {
+                zval.set_bool(b);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::Int8(i) => {
+                zval.set_long(i as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::Int16(i) => {
+                zval.set_long(i as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::Int32(i) => {
+                zval.set_long(i as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::Int64(i) => {
+                zval.set_long(i);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::UInt8(u) => {
+                zval.set_long(u as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::UInt16(u) => {
+                zval.set_long(u as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::UInt32(u) => {
+                zval.set_long(u as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::UInt64(u) => {
+                zval.set_long(u as i64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::Float32(f) => {
+                zval.set_double(f as f64);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::Float64(f) => {
+                zval.set_double(f);
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::String(s) => {
+                zval.set_string(s, false).map_err(|e| {
+                    PolarsException::new(format!("Failed to set string: {}", e))
+                })?;
+                Ok(zval)
+            }
+            polars::prelude::AnyValue::StringOwned(s) => {
+                zval.set_string(&s.to_string(), false).map_err(|e| {
+                    PolarsException::new(format!("Failed to set string: {}", e))
+                })?;
+                Ok(zval)
+            }
+            _ => {
+                zval.set_string(&format!("{}", value), false).map_err(|e| {
+                    PolarsException::new(format!("Failed to set string: {}", e))
+                })?;
+                Ok(zval)
+            }
+        }
+    }
 
     /// Check if DataFrame is empty
     pub fn is_empty(&self) -> bool {

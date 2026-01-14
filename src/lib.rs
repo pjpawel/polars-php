@@ -12,7 +12,9 @@ use ext_php_rs::prelude::*;
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
+        .class::<exception::PolarsException>()
         .class::<data_frame::PhpDataFrame>()
         .class::<expression::PolarsExpr>()
         .class::<data_type::PolarsDataType>()
+        .enumeration::<expression::PolarsClosedInterval>()
 }

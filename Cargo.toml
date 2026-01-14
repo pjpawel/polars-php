@@ -7,7 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-ext-php-rs = "0.15.2"
+ext-php-rs = "0.15.3"
 polars = { version = "0.51.0", features = ["lazy", "csv", "parquet", "json"] } # , "timezones"
 polars-plan = { version = "0.51.0", features = ["mode", "is_between"] }
 

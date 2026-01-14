@@ -3,7 +3,40 @@
 // Stubs for polars-php
 
 namespace Polars {
-    class DataFrame {
+    class Exception extends \Exception {
+        public function __construct() {}
+    }
+
+    class DataFrame implements \ArrayAccess {
+        /**
+         * Check if an offset (column name) exists
+         * Implements ArrayAccess::offsetExists
+         */
+        public function offsetExists(mixed $offset): bool {}
+
+        /**
+         * Get value at offset
+         * Implements ArrayAccess::offsetGet
+         *
+         * Supports:
+         * - String offset: returns single column as DataFrame
+         * - Integer offset: returns single row as DataFrame
+         * - Array of strings: returns DataFrame with specified columns
+         */
+        public function offsetGet(mixed $offset): \Polars\DataFrame {}
+
+        /**
+         * Set value at offset - not supported for DataFrames
+         * Implements ArrayAccess::offsetSet
+         */
+        public function offsetSet(mixed $_offset, mixed $_value): mixed {}
+
+        /**
+         * Unset value at offset - not supported for DataFrames
+         * Implements ArrayAccess::offsetUnset
+         */
+        public function offsetUnset(mixed $_offset): mixed {}
+
         /**
          * Get columns names
          */
@@ -63,7 +96,7 @@ namespace Polars {
         /**
          * Aggregate the columns of this DataFrame to their product value.
          */
-        public function std(?int $ddof): \Polars\DataFrame {}
+        public function std(int $ddof = 0): \Polars\DataFrame {}
 
         /**
          * Make select based on given expressions
@@ -74,12 +107,18 @@ namespace Polars {
         /**
          * Get the first n rows
          */
-        public function head(?int $n): \Polars\DataFrame {}
+        public function head(int $n = 10): \Polars\DataFrame {}
 
         /**
          * Get the last n rows
          */
-        public function tail(?int $n): \Polars\DataFrame {}
+        public function tail(int $n = 10): \Polars\DataFrame {}
+
+        /**
+         * Return the DataFrame as a scalar value
+         * The DataFrame must contain exactly one element (1 row, 1 column)
+         */
+        public function item(): mixed {}
 
         /**
          * Check if DataFrame is empty
@@ -96,12 +135,12 @@ namespace Polars {
          */
         public function __toString(): string {}
 
-        public static function fromCsv(string $path, ?bool $headerIncluded, ?string $separator): \Polars\DataFrame {}
+        public static function fromCsv(string $path, bool $headerIncluded = true, string $separator = ","): \Polars\DataFrame {}
 
         /**
          * Write to CSV file
          */
-        public function writeCsv(string $path, bool $includeHeader, ?string $separator): mixed {}
+        public function writeCsv(string $path, bool $includeHeader, string $separator = ","): mixed {}
 
         /**
          * Create a new DataFrame from a PHP array
@@ -116,7 +155,7 @@ namespace Polars {
          * ]);
          * ```
          */
-        public function __construct(array $data, bool $byKeys) {}
+        public function __construct(array $data, bool $byKeys = true) {}
     }
 
     class Expr {
@@ -126,7 +165,7 @@ namespace Polars {
 
         public static function all(): \Polars\Expr {}
 
-        public function any(?bool $ignoreNulls): \Polars\Expr {}
+        public function any(bool $ignoreNulls = true): \Polars\Expr {}
 
         public function count(): \Polars\Expr {}
 
@@ -154,95 +193,97 @@ namespace Polars {
 
         public function product(): \Polars\Expr {}
 
-        public function std(?int $ddof): \Polars\Expr {}
+        public function std(int $ddof = 1): \Polars\Expr {}
 
         public function sum(): \Polars\Expr {}
 
-        public function var(?int $ddof): \Polars\Expr {}
+        public function variance(int $ddof = 1): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function eq(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function eqMissing(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function ge(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function gt(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function le(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function lt(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function ne(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function neqMissing(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function add(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function floorDiv(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function modulo(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function mul(mixed $other): \Polars\Expr {}
 
         public function neg(): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function pow(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function sub(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function div(mixed $other): \Polars\Expr {}
 
         /**
-         * Accepts numeric, string, bool, null or PolarsExpr object
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
-        public function xor(mixed $other): \Polars\Expr {}
+        public function xxor(mixed $other): \Polars\Expr {}
 
         public function hasNulls(): \Polars\Expr {}
+
+        public function isBetween(mixed $lowerBound, mixed $upperBound, \Polars\ClosedInterval $closed): \Polars\Expr {}
 
         /**
          * Constructor creates LiteralValue from int, float, string, boolean, or null. Passing other values will cause throwing exception
@@ -253,5 +294,12 @@ namespace Polars {
 
     class DataType {
         public function __construct() {}
+    }
+
+    enum ClosedInterval {
+      case Both;
+      case Left;
+      case Right;
+      case None;
     }
 }

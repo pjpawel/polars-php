@@ -1,5 +1,6 @@
 use std::ops::{Add, Div, Neg};
-use ext_php_rs::{php_class, php_enum, php_impl};
+use ext_php_rs::{php_class, php_enum, php_impl, ZvalConvert};
+use ext_php_rs::convert::FromZval;
 use ext_php_rs::flags::DataType;
 use ext_php_rs::types::{ZendObject, Zval};
 use polars::prelude::ClosedInterval;
@@ -111,80 +112,80 @@ impl PolarsExpr {
     }
 
     #[php(defaults(ddof = 1))]
-    pub fn var(&self, ddof: u8) -> Self {
+    pub fn variance(&self, ddof: u8) -> Self {
         self.0.clone().var(ddof).into()
     }
 
     // OPERATORS //
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn eq(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().eq(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn eq_missing(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().eq_missing(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn ge(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().gt_eq(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn gt(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().gt(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn le(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().lt_eq(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn lt(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().lt(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn ne(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().neq(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn neq_missing(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().neq_missing(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn add(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().add(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     #[allow(non_snake_case)]
     pub fn floorDiv(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().floor_div(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn modulo(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok((self.0.clone() % other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn mul(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok((self.0.clone() * other_expr).into())
@@ -194,26 +195,26 @@ impl PolarsExpr {
         self.0.clone().neg().into()
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn pow(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().pow(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn sub(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok((self.0.clone() - other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
     pub fn div(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().div(other_expr).into())
     }
 
-    /// Accepts numeric, string, bool, null or PolarsExpr object
-    pub fn xor(&self, other: &Zval) -> ExtResult<Self> {
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+    pub fn xxor(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().xor(other_expr).into())
     }
@@ -225,17 +226,19 @@ impl PolarsExpr {
         self.0.clone().null_count().gt(0).into()
     }
 
-    // #[allow(non_snake_case)]
-    // pub fn isBetween(
-    //     &self,
-    //     lowerBound: IntoExprUnion,
-    //     upperBound: IntoExprUnion,
-    //     closed: PolarsClosedInterval
-    // ) -> Self {
-    //     self.0.clone()
-    //         .is_between(lowerBound.get_expr(), upperBound.get_expr(), closed.into())
-    //         .into()
-    // }
+    #[allow(non_snake_case)]
+    pub fn isBetween(
+        &self,
+        lowerBound: &Zval,
+        upperBound: &Zval,
+        closed: PolarsClosedInterval
+    ) -> ExtResult<Self> {
+        let lower = zval_to_expr(lowerBound)?;
+        let upper = zval_to_expr(upperBound)?;
+        Ok(self.0.clone()
+            .is_between(lower, upper, closed.into())
+            .into())
+    }
 
 
 }
@@ -267,9 +270,20 @@ impl Into<Expr> for &PolarsExpr {
     }
 }
 
-
+// impl FromZval<'_> for PolarsExpr {
+//     const TYPE: DataType = DataType::Object(Some("Polars\\Expr"));
+//
+//     fn from_zval(zval: &Zval) -> Option<Self> {
+//         //let object: &ZendObject = value.object().unwrap();
+//         //                 if !object.is_instance::<PolarsExpr>() {
+//         //                     return Err(PolarsException::new("Passed object is not of class Polars\\Expr".to_string()));
+//         //                 }
+//         //                 value.extract::<&PolarsExpr>().unwrap().into()
+//     }
+// }
 
 #[php_enum]
+#[php(name = "Polars\\ClosedInterval")]
 pub enum PolarsClosedInterval {
     Both,
     Left,
@@ -288,6 +302,28 @@ impl Into<ClosedInterval> for PolarsClosedInterval {
     }
 }
 
+// #[derive(Clone, Debug, ZvalConvert)]
+// enum IntoExprUnion<'a> {
+//     Str(&'a str),
+//     Long(u64),
+//     Double(f64),
+//     Bool(bool),
+//     None,
+//     Expr(&'a PolarsExpr),
+// }
+//
+// impl IntoExprUnion<'_> {
+//     pub fn get_expr(&self) -> Expr {
+//         match self {
+//             Self::Str(name) => (*name).into(),
+//             Self::Long(number) => (*number).into(),
+//             Self::Double(number) => (*number).into(),
+//             Self::Bool(boolean) => (*boolean).into(),
+//             Self::None => NULL.lit(),
+//             Self::Expr(p_expr) => p_expr.get_expr().to_owned()
+//         }
+//     }
+// }
 
 pub fn zval_to_expr(value: &Zval) -> ExtResult<Expr> {
     Ok(
@@ -311,11 +347,3 @@ pub fn zval_to_expr(value: &Zval) -> ExtResult<Expr> {
         }
     )
 }
-
-// impl Into<Expr> for &Zval {
-//     fn into(&self) -> Expr {
-//         zval_to_expr(&self).unwrap()
-//     }
-// }
-
-

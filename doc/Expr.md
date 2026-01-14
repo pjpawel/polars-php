@@ -92,7 +92,7 @@
 | inspect                |                   | [ ]             | [ ]        |                                               |
 | interpolate            |                   | [ ]             | [ ]        |                                               |
 | interpolate_by         |                   | [ ]             | [ ]        |                                               |
-| is_between             |                   | [ ]             | [ ]        |                                               |
+| is_between             |                   | [X]             | [ ]        |                                               |
 | is_close               |                   | [ ]             | [ ]        |                                               |
 | is_duplicated          |                   | [ ]             | [ ]        |                                               |
 | is_finite              |                   | [ ]             | [ ]        |                                               |
@@ -208,6 +208,6 @@
 | unique_counts          |                   | [ ]             | [ ]        |                                               |
 | upper_bound            |                   | [ ]             | [ ]        |                                               |
 | value_counts           |                   | [ ]             | [ ]        |                                               |
-| var                    |                   | [X]             | [ ]        |                                               |
+| var                    | variance          | [X]             | [ ]        |                                               |
 | where                  |                   | [ ]             | [ ]        |                                               |
-| xor                    |                   | [X]             | [ ]        |                                               |
+| xor                    | xxor              | [X]             | [ ]        |                                               |
