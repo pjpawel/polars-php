@@ -25,12 +25,15 @@ jobs:
           - os: ubuntu-latest
             extension: so
             rust-target: x86_64-unknown-linux-gnu
+            rust-toolchain: stable
           - os: windows-latest
             extension: dll
             rust-target: x86_64-pc-windows-msvc
+            rust-toolchain: nightly
           - os: macos-latest
             extension: dylib
             rust-target: x86_64-apple-darwin
+            rust-toolchain: stable
 
     steps:
       - name: Checkout code
@@ -44,8 +47,9 @@ jobs:
           tools: none
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
         with:
+          toolchain: ${{ matrix.rust-toolchain }}
           targets: ${{ matrix.rust-target }}
 
       - name: Cache Cargo
