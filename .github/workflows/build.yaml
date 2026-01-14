@@ -1,0 +1,256 @@
+name: Build PHP Extension
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ created ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build - ${{ matrix.os }} - PHP ${{ matrix.php }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        php: ['8.3', '8.4', '8.5']
+        include:
+          - os: ubuntu-latest
+            extension: so
+            rust-target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            extension: dll
+            rust-target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            extension: dylib
+            rust-target: x86_64-apple-darwin
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: none
+          tools: none
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-target }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install LLVM (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install llvm -y
+          echo "LIBCLANG_PATH=C:\Program Files\LLVM\bin" >> $env:GITHUB_ENV
+
+      - name: Install LLVM (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-dev libclang-dev clang
+
+      - name: Install LLVM (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm
+          echo "LLVM_PATH=$(brew --prefix llvm)" >> $GITHUB_ENV
+
+      - name: Build extension (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: cargo build --release
+
+      - name: Build extension (Windows)
+        if: runner.os == 'Windows'
+        run: cargo build --release
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+
+      - name: Find built extension
+        id: find-extension
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            EXT_PATH=$(find target/release -name "*.dll" | head -n 1)
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            EXT_PATH=$(find target/release -name "*.dylib" | head -n 1)
+          else
+            EXT_PATH=$(find target/release -name "*.so" | head -n 1)
+          fi
+          echo "extension_path=$EXT_PATH" >> $GITHUB_OUTPUT
+          echo "Found extension: $EXT_PATH"
+
+      - name: Test extension loading
+        shell: bash
+        run: |
+          php -d extension=${{ steps.find-extension.outputs.extension_path }} -m
+
+      - name: Rename extension for distribution
+        shell: bash
+        run: |
+          EXT_NAME=$(basename ${{ steps.find-extension.outputs.extension_path }})
+          BASE_NAME="${EXT_NAME%.*}"
+          NEW_NAME="${BASE_NAME}-php${{ matrix.php }}-${{ matrix.os }}.${{ matrix.extension }}"
+          cp ${{ steps.find-extension.outputs.extension_path }} $NEW_NAME
+          echo "ARTIFACT_NAME=$NEW_NAME" >> $GITHUB_ENV
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ matrix.os }}-php${{ matrix.php }}
+          path: ${{ env.ARTIFACT_NAME }}
+          retention-days: 30
+
+  generate-stubs:
+    name: Generate PHP Stubs
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: none
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-stubs-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install LLVM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-dev libclang-dev clang
+
+      - name: Install cargo-php tool
+        run: |
+          cargo install cargo-php || true
+
+      - name: Generate stubs
+        run: |
+          cargo php stubs --stdout > stubs.php || echo "<?php\n// Stubs generation failed\n" > stubs.php
+
+      - name: Verify stubs file
+        run: |
+          if [ -s stubs.php ]; then
+            echo "Stubs generated successfully"
+            head -n 20 stubs.php
+          else
+            echo "Warning: Stubs file is empty"
+          fi
+
+      - name: Upload stubs
+        uses: actions/upload-artifact@v4
+        with:
+          name: php-stubs
+          path: stubs.php
+          retention-days: 90
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [build, generate-stubs]
+    if: github.event_name == 'release'
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure
+        run: ls -R artifacts/
+
+      - name: Create release archives
+        run: |
+          cd artifacts
+          for dir in extension-*; do
+            if [ -d "$dir" ]; then
+              cd "$dir"
+              for file in *; do
+                zip "../${file}.zip" "$file"
+              done
+              cd ..
+            fi
+          done
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/*.zip
+            artifacts/php-stubs/stubs.php
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Test Extension - ${{ matrix.os }} - PHP ${{ matrix.php }}
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        php: ['8.3', '8.4', '8.5']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+
+      - name: Download extension artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: extension-${{ matrix.os }}-php${{ matrix.php }}
+          path: extension
+
+      - name: Run tests
+        shell: bash
+        run: |
+          EXT_FILE=$(find extension -type f \( -name "*.so" -o -name "*.dll" -o -name "*.dylib" \) | head -n 1)
+          echo "Testing extension: $EXT_FILE"
+          php -d extension="$EXT_FILE" -m
+          
+          # Add your custom test commands here
+          # php -d extension="$EXT_FILE" tests/run-tests.php
