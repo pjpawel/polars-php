@@ -10,66 +10,69 @@ namespace Polars {
     class DataFrame implements \ArrayAccess {
         /**
          * Check if an offset (column name) exists
-         * Implements ArrayAccess::offsetExists
          */
         public function offsetExists(mixed $offset): bool {}
 
         /**
          * Get value at offset
-         * Implements ArrayAccess::offsetGet
          *
          * Supports:
-         * - String offset: returns single column as DataFrame
-         * - Integer offset: returns single row as DataFrame
-         * - Array of strings: returns DataFrame with specified columns
+         * - String offset: returns single column as DataFrame $df['col1']
+         * - Integer offset: returns single row as DataFrame $df[1]
+         * - Array of strings: returns DataFrame with specified columns $df[['col1', 'col2']]
+         * - Array of string and integer: returns specific cells $df[['col1', 1]], $df[['col1', 'col2', 0]]
+         *
+         * @param $offset string|int|array
          */
         public function offsetGet(mixed $offset): \Polars\DataFrame {}
 
         /**
          * Set value at offset - not supported for DataFrames
-         * Implements ArrayAccess::offsetSet
+         * @return void
          */
         public function offsetSet(mixed $_offset, mixed $_value): mixed {}
 
         /**
          * Unset value at offset - not supported for DataFrames
-         * Implements ArrayAccess::offsetUnset
+         * @return void
          */
         public function offsetUnset(mixed $_offset): mixed {}
 
         /**
          * Get columns names
+         * @returns string[]
          */
         public function getColumns(): array {}
 
         /**
          * Set columns names
          * @param string[] $columns - length of list must be equal to current length of columns
+         * @return void
          */
         public function setColumns(array $columns): mixed {}
 
         /**
-         * Return list of
+         * @return \Polars\DataType[]
          */
         public function dtypes(): array {}
 
         /**
-         * Get the number of rows
+         * @return int Get the number of rows
          */
         public function height(): int {}
 
         /**
-         * Get the shape of the DataFrame as [rows, columns]
+         * @return int[] Get the shape of the DataFrame as [rows, columns]
          */
         public function shape(): array {}
 
         /**
-         * Get the number of columns
+         * @return int Get the number of columns
          */
         public function width(): int {}
 
         /**
-         * Return the number of non-null elements for each column.
+         * @return \Polars\DataFrame Return the number of non-null elements for each column.
          */
         public function count(): \Polars\DataFrame {}
 
@@ -77,11 +80,6 @@ namespace Polars {
          * Aggregate the columns of this DataFrame to their maximum value.
          */
         public function max(): \Polars\DataFrame {}
-
-        /**
-         * Get the maximum value horizontally across columns.
-         */
-        public function maxHorizontal(): \Polars\DataFrame {}
 
         /**
          * Aggregate the columns of this DataFrame to their mean value.

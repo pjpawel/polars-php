@@ -102,6 +102,7 @@ pub struct PhpDataFrame {
 #[php_impl]
 #[php(change_method_case = "camelCase")]
 impl PhpDataFrame {
+
     /// Create a new DataFrame from a PHP array
     /// keys are column name
     ///
@@ -137,9 +138,9 @@ impl PhpDataFrame {
     // Array Access //
 
     /// Check if an offset (column name) exists
-    /// Implements ArrayAccess::offsetExists
     #[php(name = "offsetExists")]
     pub fn offset_exists(&self, offset: &Zval) -> bool {
+        // Method required by ArrayAccess interface
         if let Some(col_name) = offset.string() {
             return self.inner.get_column_names().iter().any(|c| c.as_str() == col_name);
         }
@@ -155,14 +156,17 @@ impl PhpDataFrame {
     }
 
     /// Get value at offset
-    /// Implements ArrayAccess::offsetGet
     ///
     /// Supports:
-    /// - String offset: returns single column as DataFrame
-    /// - Integer offset: returns single row as DataFrame
-    /// - Array of strings: returns DataFrame with specified columns
+    /// - String offset: returns single column as DataFrame $df['col1']
+    /// - Integer offset: returns single row as DataFrame $df[1]
+    /// - Array of strings: returns DataFrame with specified columns $df[['col1', 'col2']]
+    /// - Array of string and integer: returns specific cells $df[['col1', 1]], $df[['col1', 'col2', 0]]
+    ///
+    /// @param $offset string|int|array
     #[php(name = "offsetGet")]
     pub fn offset_get(&self, offset: &Zval) -> ExtResult<Self> {
+        // Method required by ArrayAccess interface
         // Single column by name
         if let Some(col_name) = offset.string() {
             let col = self.inner.column(&col_name).map_err(|e| {
@@ -250,18 +254,20 @@ impl PhpDataFrame {
     }
 
     /// Set value at offset - not supported for DataFrames
-    /// Implements ArrayAccess::offsetSet
+    /// @return void
     #[php(name = "offsetSet")]
     pub fn offset_set(&mut self, _offset: &Zval, _value: &Zval) -> ExtResult<()> {
+        // Method required by ArrayAccess interface
         Err(PolarsException::new(
             "DataFrame does not support item assignment. Use withColumn() or similar methods instead.".to_string(),
         ))
     }
 
     /// Unset value at offset - not supported for DataFrames
-    /// Implements ArrayAccess::offsetUnset
+    /// @return void
     #[php(name = "offsetUnset")]
     pub fn offset_unset(&mut self, _offset: &Zval) -> ExtResult<()> {
+        // Method required by ArrayAccess interface
         Err(PolarsException::new(
             "DataFrame does not support unsetting columns. Use drop() method instead.".to_string(),
         ))
@@ -270,6 +276,7 @@ impl PhpDataFrame {
     // Attributes //
 
     /// Get columns names
+    /// @returns string[]
     #[php(getter)]
     pub fn get_columns(&self) -> Vec<&str> {
         self.inner
@@ -281,6 +288,7 @@ impl PhpDataFrame {
 
     /// Set columns names
     /// @param string[] $columns - length of list must be equal to current length of columns
+    /// @return void
     #[php(setter)]
     pub fn set_columns(&mut self, columns: Vec<&str>) -> ExtResult<()> {
         Ok(self.inner.set_column_names(columns).map_err(|e| {
@@ -288,7 +296,7 @@ impl PhpDataFrame {
         })?)
     }
 
-    /// Return list of
+    /// @return \Polars\DataType[]
     #[php(getter)]
     pub fn dtypes(&self) -> Vec<PolarsDataType> {
         self.inner
@@ -298,25 +306,25 @@ impl PhpDataFrame {
             .collect()
     }
 
-    /// Get the number of rows
+    /// @return int Get the number of rows
     pub fn height(&self) -> usize {
         self.inner.height()
     }
 
-    /// Get the shape of the DataFrame as [rows, columns]
+    /// @return int[] Get the shape of the DataFrame as [rows, columns]
     pub fn shape(&self) -> Vec<usize> {
         let shape = self.inner.shape();
         vec![shape.0, shape.1]
     }
 
-    /// Get the number of columns
+    /// @return int Get the number of columns
     pub fn width(&self) -> usize {
         self.inner.width()
     }
 
     // Aggregation //
 
-    /// Return the number of non-null elements for each column.
+    /// @return \Polars\DataFrame Return the number of non-null elements for each column.
     pub fn count(&self) -> ExtResult<Self> {
         let inner = match self
             .inner
@@ -358,11 +366,11 @@ impl PhpDataFrame {
         Ok(Self { inner })
     }
 
-    /// Get the maximum value horizontally across columns.
-    pub fn max_horizontal(&self) -> ExtResult<Self> {
-        //use select https://github.com/pola-rs/polars/blob/py-1.35.2/py-polars/src/polars/dataframe/frame.py#L10422
-        todo!()
-    }
+    // /// Get the maximum value horizontally across columns.
+    // pub fn max_horizontal(&self) -> ExtResult<Self> {
+    //     //use select https://github.com/pola-rs/polars/blob/py-1.35.2/py-polars/src/polars/dataframe/frame.py#L10422
+    //     todo!()
+    // }
 
     /// Aggregate the columns of this DataFrame to their mean value.
     pub fn mean(&self) -> ExtResult<Self> {

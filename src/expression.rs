@@ -1,6 +1,5 @@
 use std::ops::{Add, Div, Neg};
-use ext_php_rs::{php_class, php_enum, php_impl, ZvalConvert};
-use ext_php_rs::convert::FromZval;
+use ext_php_rs::{php_class, php_enum, php_impl};
 use ext_php_rs::flags::DataType;
 use ext_php_rs::types::{ZendObject, Zval};
 use polars::prelude::ClosedInterval;
@@ -74,23 +73,23 @@ impl PolarsExpr {
         self.0.clone().min().into()
     }
 
-    #[allow(non_snake_case)]
-    pub fn nUnique(&self) -> Self {
+    #[php(name="nUnique")]
+    pub fn n_unique(&self) -> Self {
         self.0.clone().n_unique().into()
     }
 
-    #[allow(non_snake_case)]
-    pub fn nanMax(&self) -> Self {
+    #[php(name="nanMax")]
+    pub fn nan_max(&self) -> Self {
         self.0.clone().nan_max().into()
     }
 
-    #[allow(non_snake_case)]
-    pub fn nanMin(&self) -> Self {
+    #[php(name="nanMin")]
+    pub fn nan_min(&self) -> Self {
         self.0.clone().nan_min().into()
     }
 
-    #[allow(non_snake_case)]
-    pub fn nullCount(&self) -> Self {
+    #[php(name="nullCount")]
+    pub fn null_count(&self) -> Self {
         self.0.clone().null_count().into()
     }
 
@@ -125,6 +124,7 @@ impl PolarsExpr {
     }
 
     /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+    #[php(name="eqMissing")]
     pub fn eq_missing(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().eq_missing(other_expr).into())
@@ -161,6 +161,7 @@ impl PolarsExpr {
     }
 
     /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+    #[php(name="neqMissing")]
     pub fn neq_missing(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().neq_missing(other_expr).into())
@@ -173,8 +174,8 @@ impl PolarsExpr {
     }
 
     /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
-    #[allow(non_snake_case)]
-    pub fn floorDiv(&self, other: &Zval) -> ExtResult<Self> {
+    #[php(name="floorDiv")]
+    pub fn floor_div(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().floor_div(other_expr).into())
     }
@@ -221,13 +222,14 @@ impl PolarsExpr {
 
     // BOOLEAN //
 
-    #[allow(non_snake_case)]
-    pub fn hasNulls(&self) -> Self {
+    #[php(name="hasNulls")]
+    pub fn has_nulls(&self) -> Self {
         self.0.clone().null_count().gt(0).into()
     }
 
     #[allow(non_snake_case)]
-    pub fn isBetween(
+    #[php(name="isBetween")]
+    pub fn is_between(
         &self,
         lowerBound: &Zval,
         upperBound: &Zval,
