@@ -64,8 +64,8 @@ All attributes that can be modified in place will have getter and setter methods
 | to_struct                  |                        | [ ]             |            |                                                                                       |
 | to_torch                   |                        | [ ]             |            |                                                                                       |
 | **Manipulation/Selection** |                        | -----           |            |                                                                                       |
-| __getitem__                |                        | [ ]             |            |                                                                                       |
-| __setitem__                |                        | [ ]             |            |                                                                                       |
+| __getitem__                | offsetGet              | [ ]             |            |                                                                                       |
+| __setitem__                |                        | [X]             |            |                                                                                       |
 | bottom_k                   |                        | [ ]             |            |                                                                                       |
 | cast                       |                        | [ ]             |            |                                                                                       |
 | clear                      |                        | [ ]             |            |                                                                                       |
@@ -89,7 +89,7 @@ All attributes that can be modified in place will have getter and setter methods
 | hstack                     |                        | [ ]             |            |                                                                                       |
 | insert_column              |                        | [ ]             |            |                                                                                       |
 | interpolate                |                        | [ ]             |            |                                                                                       |
-| item                       |                        | [ ]             |            |                                                                                       |
+| item                       |                        | [X]             |            |                                                                                       |
 | iter_columns               |                        | [ ]             |            |                                                                                       |
 | iter_rows                  |                        | [ ]             |            |                                                                                       |
 | iter_slices                |                        | [ ]             |            |                                                                                       |
