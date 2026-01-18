@@ -54,6 +54,7 @@ $result = $df->select([$expr]);
 :caption: Classes
 
 dataframe
+series
 expr
 datatype
 exception

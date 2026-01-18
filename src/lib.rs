@@ -1,19 +1,20 @@
 #![cfg_attr(windows, feature(abi_vectorcall))]
 
-mod data_frame;
-mod exception;
-mod data_type;
-mod expression;
 mod common;
+mod data_frame;
+mod data_type;
+mod exception;
+mod expression;
+mod series;
 
 use ext_php_rs::prelude::*;
-
 
 #[php_module]
 pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
     module
         .class::<exception::PolarsException>()
         .class::<data_frame::PhpDataFrame>()
+        .class::<series::PhpSeries>()
         .class::<expression::PolarsExpr>()
         .class::<data_type::PolarsDataType>()
         .enumeration::<expression::PolarsClosedInterval>()

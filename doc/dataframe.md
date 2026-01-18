@@ -83,6 +83,54 @@ Get data types of all columns.
 
 :returns: DataType[] - Array of DataType objects
 
+## Series Access
+
+### column
+
+```{php:method} column(string $name): Series
+```
+
+Get a single column as a Series.
+
+:param string $name: Column name
+:returns: Series
+:raises Polars\\Exception: If column doesn't exist
+
+**Example:**
+
+```php
+$df = new DataFrame([
+    'a' => [1, 2, 3],
+    'b' => [4, 5, 6],
+]);
+
+$series = $df->column('a');
+$series->getName(); // 'a'
+$series->sum();     // 6
+```
+
+### getSeries
+
+```{php:method} getSeries(): array
+```
+
+Get all columns as an array of Series.
+
+:returns: Series[] - Array of Series objects
+
+**Example:**
+
+```php
+$df = new DataFrame([
+    'x' => [1, 2],
+    'y' => [3, 4],
+]);
+
+$seriesArr = $df->getSeries();
+// $seriesArr[0] is Series 'x'
+// $seriesArr[1] is Series 'y'
+```
+
 ## Dimensions
 
 ### height

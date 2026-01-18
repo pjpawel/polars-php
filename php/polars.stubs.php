@@ -119,6 +119,18 @@ namespace Polars {
         public function item(): mixed {}
 
         /**
+         * Get a single column as a Series
+         * @return \Polars\Series
+         */
+        public function column(string $name): \Polars\Series {}
+
+        /**
+         * Get all columns as an array of Series
+         * @return \Polars\Series[]
+         */
+        public function getSeries(): array {}
+
+        /**
          * Check if DataFrame is empty
          */
         public function isEmpty(): bool {}
@@ -154,6 +166,293 @@ namespace Polars {
          * ```
          */
         public function __construct(array $data, bool $byKeys = true) {}
+    }
+
+    class Series implements \ArrayAccess, \Countable {
+        /**
+         * Check if an index exists
+         */
+        public function offsetExists(mixed $offset): bool {}
+
+        /**
+         * Get value at index
+         */
+        public function offsetGet(mixed $offset): mixed {}
+
+        /**
+         * Set value at index - not supported
+         * @return void
+         */
+        public function offsetSet(mixed $_offset, mixed $_value): mixed {}
+
+        /**
+         * Unset value at index - not supported
+         * @return void
+         */
+        public function offsetUnset(mixed $_offset): mixed {}
+
+        /**
+         * Get the number of elements (Countable interface)
+         */
+        public function count(): int {}
+
+        /**
+         * Get the name of the Series
+         */
+        public function getName(): string {}
+
+        /**
+         * Get the data type of the Series
+         */
+        public function getDtype(): \Polars\DataType {}
+
+        /**
+         * Get the shape of the Series as [length]
+         */
+        public function getShape(): array {}
+
+        /**
+         * Get the number of elements in the Series
+         */
+        public function len(): int {}
+
+        /**
+         * Check if Series is empty
+         */
+        public function isEmpty(): bool {}
+
+        /**
+         * Get the first n elements
+         */
+        public function head(int $n = 10): \Polars\Series {}
+
+        /**
+         * Get the last n elements
+         */
+        public function tail(int $n = 10): \Polars\Series {}
+
+        /**
+         * Get a single value from the Series (must have exactly one element)
+         */
+        public function item(): mixed {}
+
+        /**
+         * Get the first element
+         */
+        public function first(): mixed {}
+
+        /**
+         * Get the last element
+         */
+        public function last(): mixed {}
+
+        /**
+         * Extract a slice of the Series
+         */
+        public function slice(int $offset, int $length): \Polars\Series {}
+
+        /**
+         * Get the sum of all values
+         */
+        public function sum(): mixed {}
+
+        /**
+         * Get the mean of all values
+         */
+        public function mean(): float {}
+
+        /**
+         * Get the median of all values
+         */
+        public function median(): float {}
+
+        /**
+         * Get the minimum value
+         */
+        public function min(): mixed {}
+
+        /**
+         * Get the maximum value
+         */
+        public function max(): mixed {}
+
+        /**
+         * Get the standard deviation
+         */
+        public function std(int $ddof = 1): float {}
+
+        /**
+         * Get the variance
+         */
+        public function variance(int $ddof = 1): float {}
+
+        /**
+         * Get the product of all values
+         */
+        public function product(): mixed {}
+
+        /**
+         * Count non-null values
+         */
+        public function countNonNull(): int {}
+
+        /**
+         * Count null values
+         */
+        public function nullCount(): int {}
+
+        /**
+         * Count unique values
+         */
+        public function nUnique(): int {}
+
+        /**
+         * Check which values are null
+         */
+        public function isNull(): \Polars\Series {}
+
+        /**
+         * Check which values are not null
+         */
+        public function isNotNull(): \Polars\Series {}
+
+        /**
+         * Check which values are NaN
+         */
+        public function isNan(): \Polars\Series {}
+
+        /**
+         * Check which values are not NaN
+         */
+        public function isNotNan(): \Polars\Series {}
+
+        /**
+         * Check if any value is true (for boolean Series)
+         */
+        public function any(): bool {}
+
+        /**
+         * Check if all values are true (for boolean Series)
+         */
+        public function all(): bool {}
+
+        /**
+         * Element-wise equality comparison
+         * @param int|float|string|bool|null $other
+         */
+        public function eq(mixed $other): \Polars\Series {}
+
+        /**
+         * Element-wise inequality comparison
+         * @param int|float|string|bool|null $other
+         */
+        public function ne(mixed $other): \Polars\Series {}
+
+        /**
+         * Element-wise less than comparison
+         * @param int|float|string|bool|null $other
+         */
+        public function lt(mixed $other): \Polars\Series {}
+
+        /**
+         * Element-wise less than or equal comparison
+         * @param int|float|string|bool|null $other
+         */
+        public function le(mixed $other): \Polars\Series {}
+
+        /**
+         * Element-wise greater than comparison
+         * @param int|float|string|bool|null $other
+         */
+        public function gt(mixed $other): \Polars\Series {}
+
+        /**
+         * Element-wise greater than or equal comparison
+         * @param int|float|string|bool|null $other
+         */
+        public function ge(mixed $other): \Polars\Series {}
+
+        /**
+         * Sort the Series
+         */
+        public function sort(bool $descending = false, bool $nullsLast = true): \Polars\Series {}
+
+        /**
+         * Reverse the Series
+         */
+        public function reverse(): \Polars\Series {}
+
+        /**
+         * Get unique values
+         */
+        public function unique(): \Polars\Series {}
+
+        /**
+         * Remove null values
+         */
+        public function dropNulls(): \Polars\Series {}
+
+        /**
+         * Fill null values using forward strategy
+         */
+        public function fillNullForward(): \Polars\Series {}
+
+        /**
+         * Fill null values using backward strategy
+         */
+        public function fillNullBackward(): \Polars\Series {}
+
+        /**
+         * Fill null values with the mean
+         */
+        public function fillNullMean(): \Polars\Series {}
+
+        /**
+         * Fill null values with zero
+         */
+        public function fillNullZero(): \Polars\Series {}
+
+        /**
+         * Convert Series to PHP array
+         */
+        public function toArray(): array {}
+
+        /**
+         * Rename the Series
+         */
+        public function rename(string $name): \Polars\Series {}
+
+        /**
+         * Create an alias for the Series (same as rename)
+         */
+        public function alias(string $name): \Polars\Series {}
+
+        /**
+         * Create a copy of the Series
+         */
+        public function copy(): \Polars\Series {}
+
+        /**
+         * Cast Series to a different data type
+         * @param string $dtype One of: 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64', 'float32', 'float64', 'bool', 'string'
+         */
+        public function cast(string $dtype): \Polars\Series {}
+
+        /**
+         * Display the Series
+         */
+        public function __toString(): string {}
+
+        /**
+         * Create a new Series from a PHP array
+         *
+         * # Example (PHP)
+         * ```php
+         * $s = new Series('values', [1, 2, 3, 4, 5]);
+         * $s = new Series('names', ['Alice', 'Bob', 'Charlie']);
+         * ```
+         */
+        public function __construct(string $name = "", array $values) {}
     }
 
     class Expr {

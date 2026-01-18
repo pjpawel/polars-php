@@ -1,11 +1,16 @@
+use crate::common::any_value_to_zval;
 use crate::data_type::PolarsDataType;
 use crate::exception::{ExtResult, PolarsException};
 use crate::expression::PolarsExpr;
-use ext_php_rs::zend::ce;
+use crate::series::PhpSeries;
 use ext_php_rs::flags::DataType as PhpDataType;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
-use polars::prelude::{Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, OptFlags, SerReader, SerWriter};
+use ext_php_rs::zend::ce;
+use polars::prelude::{
+    Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, OptFlags, SerReader,
+    SerWriter,
+};
 use polars_plan::dsl::Expr;
 
 fn parse_array_to_cols_by_keys(data: &ZendHashTable) -> ExtResult<Vec<Column>> {
@@ -485,80 +490,37 @@ impl PhpDataFrame {
             )));
         }
 
-        let col = self.inner.get_columns().first().ok_or_else(|| {
-            PolarsException::new("Failed to get column".to_string())
-        })?;
+        let col = self
+            .inner
+            .get_columns()
+            .first()
+            .ok_or_else(|| PolarsException::new("Failed to get column".to_string()))?;
 
-        let value = col.get(0).map_err(|e| {
-            PolarsException::new(format!("Failed to get value: {}", e))
-        })?;
+        let value = col
+            .get(0)
+            .map_err(|e| PolarsException::new(format!("Failed to get value: {}", e)))?;
 
-        let mut zval = Zval::new();
-        match value {
-            polars::prelude::AnyValue::Null => Ok(zval),
-            polars::prelude::AnyValue::Boolean(b) => {
-                zval.set_bool(b);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::Int8(i) => {
-                zval.set_long(i as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::Int16(i) => {
-                zval.set_long(i as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::Int32(i) => {
-                zval.set_long(i as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::Int64(i) => {
-                zval.set_long(i);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::UInt8(u) => {
-                zval.set_long(u as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::UInt16(u) => {
-                zval.set_long(u as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::UInt32(u) => {
-                zval.set_long(u as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::UInt64(u) => {
-                zval.set_long(u as i64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::Float32(f) => {
-                zval.set_double(f as f64);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::Float64(f) => {
-                zval.set_double(f);
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::String(s) => {
-                zval.set_string(s, false).map_err(|e| {
-                    PolarsException::new(format!("Failed to set string: {}", e))
-                })?;
-                Ok(zval)
-            }
-            polars::prelude::AnyValue::StringOwned(s) => {
-                zval.set_string(&s.to_string(), false).map_err(|e| {
-                    PolarsException::new(format!("Failed to set string: {}", e))
-                })?;
-                Ok(zval)
-            }
-            _ => {
-                zval.set_string(&format!("{}", value), false).map_err(|e| {
-                    PolarsException::new(format!("Failed to set string: {}", e))
-                })?;
-                Ok(zval)
-            }
-        }
+        any_value_to_zval(value)
+    }
+
+    /// Get a single column as a Series
+    /// @return \Polars\Series
+    pub fn column(&self, name: String) -> ExtResult<PhpSeries> {
+        let col = self.inner.column(&name).map_err(|e| {
+            PolarsException::new(format!("Column '{}' not found: {}", name, e))
+        })?;
+        Ok(PhpSeries::from(col.clone().take_materialized_series()))
+    }
+
+    /// Get all columns as an array of Series
+    /// @return \Polars\Series[]
+    #[php(name = "getSeries")]
+    pub fn get_series(&self) -> Vec<PhpSeries> {
+        self.inner
+            .get_columns()
+            .iter()
+            .map(|c| PhpSeries::from(c.clone().take_materialized_series()))
+            .collect()
     }
 
     /// Check if DataFrame is empty
