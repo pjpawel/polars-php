@@ -1,6 +1,25 @@
-use ext_php_rs::types::Zval;
+use ext_php_rs::types::{ZendHashTable, Zval};
 use polars::prelude::AnyValue;
+use polars_plan::dsl::Expr;
 use crate::exception::{ExtResult, PolarsException};
+use crate::expression::PolarsExpr;
+
+/// Extract Vec<Expr> from a PHP ZendHashTable containing PolarsExpr objects
+pub fn extract_exprs(expressions: &ZendHashTable) -> ExtResult<Vec<Expr>> {
+    let mut exprs: Vec<Expr> = Vec::new();
+    for (_, value) in expressions.iter() {
+        let expr: &PolarsExpr = match value.extract::<&PolarsExpr>() {
+            Some(expr) => expr,
+            None => {
+                return Err(PolarsException::new(
+                    "Argument must be a list of \\Polars\\Expr objects".to_string(),
+                ));
+            }
+        };
+        exprs.push(expr.get_expr().clone());
+    }
+    Ok(exprs)
+}
 
 /// Convert a Polars AnyValue to a PHP Zval
 pub fn any_value_to_zval(value: AnyValue) -> ExtResult<Zval> {

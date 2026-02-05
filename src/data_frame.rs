@@ -1,7 +1,6 @@
 use crate::common::any_value_to_zval;
 use crate::data_type::PolarsDataType;
 use crate::exception::{ExtResult, PolarsException};
-use crate::expression::PolarsExpr;
 use crate::series::PhpSeries;
 use ext_php_rs::flags::DataType as PhpDataType;
 use ext_php_rs::prelude::*;
@@ -139,6 +138,18 @@ impl PhpDataFrame {
             .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
         Ok(Self { inner: df })
     }
+
+    // Lazy //
+
+    /// Convert this DataFrame to a LazyFrame for lazy evaluation
+    /// @return \Polars\LazyFrame
+    pub fn lazy(&self) -> crate::lazy_frame::PhpLazyFrame {
+        crate::lazy_frame::PhpLazyFrame {
+            inner: self.inner.clone().lazy(),
+        }
+    }
+
+    // Static methods //
 
     // Array Access //
 
@@ -444,18 +455,7 @@ impl PhpDataFrame {
     /// Make select based on given expressions
     /// @param \Polars\Expr[]
     pub fn select(&self, expressions: &ZendHashTable) -> ExtResult<Self> {
-        let mut exprs: Vec<Expr> = Vec::new();
-        for (_, value) in expressions.iter() {
-            let expr: &PolarsExpr = match value.extract::<&PolarsExpr>() {
-                Some(expr) => expr,
-                None => {
-                    return Err(PolarsException::new(
-                        "Argument must be a list of \\Polars\\Expr objects".to_string(),
-                    ));
-                }
-            };
-            exprs.push(expr.get_expr().clone());
-        }
+        let exprs = crate::common::extract_exprs(expressions)?;
         self._do_select(exprs)
     }
 

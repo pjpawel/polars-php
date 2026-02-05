@@ -5,6 +5,9 @@ mod data_frame;
 mod data_type;
 mod exception;
 mod expression;
+mod functions;
+mod lazy_frame;
+mod lazy_group_by;
 mod series;
 
 use ext_php_rs::prelude::*;
@@ -17,5 +20,7 @@ pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
         .class::<series::PhpSeries>()
         .class::<expression::PolarsExpr>()
         .class::<data_type::PolarsDataType>()
+        .class::<lazy_frame::PhpLazyFrame>()
+        .class::<lazy_group_by::PhpLazyGroupBy>()
         .enumeration::<expression::PolarsClosedInterval>()
 }

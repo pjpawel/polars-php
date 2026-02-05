@@ -9,6 +9,12 @@ namespace Polars {
 
     class DataFrame implements \ArrayAccess {
         /**
+         * Convert this DataFrame to a LazyFrame for lazy evaluation
+         * @return \Polars\LazyFrame
+         */
+        public function lazy(): \Polars\LazyFrame {}
+
+        /**
          * Check if an offset (column name) exists
          */
         public function offsetExists(mixed $offset): bool {}
@@ -590,6 +596,315 @@ namespace Polars {
     }
 
     class DataType {
+        public function __construct() {}
+    }
+
+    class LazyFrame {
+        /**
+         * Execute the lazy query and return a DataFrame
+         * @return \Polars\DataFrame
+         */
+        public function collect(): \Polars\DataFrame {}
+
+        /**
+         * Select columns by expression
+         * @param \Polars\Expr[] $expressions
+         * @return \Polars\LazyFrame
+         */
+        public function select(array $expressions): \Polars\LazyFrame {}
+
+        /**
+         * Filter rows by expression
+         * @return \Polars\LazyFrame
+         */
+        public function filter(\Polars\Expr $expression): \Polars\LazyFrame {}
+
+        /**
+         * Add or modify columns
+         * @param \Polars\Expr[] $expressions
+         * @return \Polars\LazyFrame
+         */
+        public function withColumns(array $expressions): \Polars\LazyFrame {}
+
+        /**
+         * Group by expressions
+         * @param \Polars\Expr[] $expressions
+         * @return \Polars\LazyGroupBy
+         */
+        public function groupBy(array $expressions): \Polars\LazyGroupBy {}
+
+        /**
+         * Sort by a single column
+         * @return \Polars\LazyFrame
+         */
+        public function sort(string $column, bool $descending = false, bool $nullsLast = true): \Polars\LazyFrame {}
+
+        /**
+         * Get column names
+         * @return string[]
+         */
+        public function getColumns(): array {}
+
+        /**
+         * Get data types
+         * @return \Polars\DataType[]
+         */
+        public function dtypes(): array {}
+
+        /**
+         * Get number of columns
+         * @return int
+         */
+        public function width(): int {}
+
+        /**
+         * Get schema description as string
+         * @return string
+         */
+        public function schema(): string {}
+
+        /**
+         * Get the first n rows
+         * @return \Polars\LazyFrame
+         */
+        public function head(int $n = 10): \Polars\LazyFrame {}
+
+        /**
+         * Get the last n rows
+         * @return \Polars\LazyFrame
+         */
+        public function tail(int $n = 10): \Polars\LazyFrame {}
+
+        /**
+         * Get the first row
+         * @return \Polars\LazyFrame
+         */
+        public function first(): \Polars\LazyFrame {}
+
+        /**
+         * Get the last row
+         * @return \Polars\LazyFrame
+         */
+        public function last(): \Polars\LazyFrame {}
+
+        /**
+         * Get a slice of rows
+         * @return \Polars\LazyFrame
+         */
+        public function slice(int $offset, int $length): \Polars\LazyFrame {}
+
+        /**
+         * Limit to n rows (alias for head)
+         * @return \Polars\LazyFrame
+         */
+        public function limit(int $n = 10): \Polars\LazyFrame {}
+
+        /**
+         * Return the number of non-null elements for each column
+         * @return \Polars\LazyFrame
+         */
+        public function count(): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their sum value
+         * @return \Polars\LazyFrame
+         */
+        public function sum(): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their mean value
+         * @return \Polars\LazyFrame
+         */
+        public function mean(): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their median value
+         * @return \Polars\LazyFrame
+         */
+        public function median(): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their minimum value
+         * @return \Polars\LazyFrame
+         */
+        public function min(): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their maximum value
+         * @return \Polars\LazyFrame
+         */
+        public function max(): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their standard deviation
+         * @return \Polars\LazyFrame
+         */
+        public function std(int $ddof = 0): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their variance
+         * @return \Polars\LazyFrame
+         */
+        public function variance(int $ddof = 0): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their quantile value
+         * @return \Polars\LazyFrame
+         */
+        public function quantile(float $quantile): \Polars\LazyFrame {}
+
+        /**
+         * Aggregate the columns to their null count
+         * @return \Polars\LazyFrame
+         */
+        public function nullCount(): \Polars\LazyFrame {}
+
+        /**
+         * Drop columns
+         * @param string[] $columns
+         * @return \Polars\LazyFrame
+         */
+        public function drop(array $columns): \Polars\LazyFrame {}
+
+        /**
+         * Rename columns
+         * @param string[] $existing Old column names
+         * @param string[] $newNames New column names
+         * @return \Polars\LazyFrame
+         */
+        public function rename(array $existing, array $newNames): \Polars\LazyFrame {}
+
+        /**
+         * Get unique rows
+         * @param string[]|null $subset Column names to consider for uniqueness
+         * @return \Polars\LazyFrame
+         */
+        public function unique(?array $subset = null, string $keep = "first"): \Polars\LazyFrame {}
+
+        /**
+         * Drop rows with null values
+         * @param string[]|null $subset Column names to check
+         * @return \Polars\LazyFrame
+         */
+        public function dropNulls(?array $subset = null): \Polars\LazyFrame {}
+
+        /**
+         * Fill null values with a value or expression
+         * @param int|float|string|bool|null|\Polars\Expr $value
+         * @return \Polars\LazyFrame
+         */
+        public function fillNull(mixed $value): \Polars\LazyFrame {}
+
+        /**
+         * Fill NaN values with a value or expression
+         * @param int|float|string|bool|null|\Polars\Expr $value
+         * @return \Polars\LazyFrame
+         */
+        public function fillNan(mixed $value): \Polars\LazyFrame {}
+
+        /**
+         * Join with another LazyFrame
+         * @param \Polars\LazyFrame $other The right LazyFrame
+         * @param \Polars\Expr[] $on Join columns (used for both left and right)
+         * @param string $how Join type: 'inner', 'left', 'right', 'full', 'cross'
+         * @return \Polars\LazyFrame
+         */
+        public function join(\Polars\LazyFrame $other, array $on, string $how = "inner"): \Polars\LazyFrame {}
+
+        /**
+         * Reverse row order
+         * @return \Polars\LazyFrame
+         */
+        public function reverse(): \Polars\LazyFrame {}
+
+        /**
+         * Return the query plan as a string
+         * @return string
+         */
+        public function explain(bool $optimized = true): string {}
+
+        /**
+         * Cache the LazyFrame computation
+         * @return \Polars\LazyFrame
+         */
+        public function cache(): \Polars\LazyFrame {}
+
+        /**
+         * String representation showing the query plan
+         */
+        public function __toString(): string {}
+
+        public function __construct() {}
+    }
+
+    class LazyGroupBy {
+        /**
+         * Aggregate using expressions
+         * @param \Polars\Expr[] $expressions
+         * @return \Polars\LazyFrame
+         */
+        public function agg(array $expressions): \Polars\LazyFrame {}
+
+        /**
+         * Count rows per group
+         * @return \Polars\LazyFrame
+         */
+        public function count(): \Polars\LazyFrame {}
+
+        /**
+         * First row per group
+         * @return \Polars\LazyFrame
+         */
+        public function first(): \Polars\LazyFrame {}
+
+        /**
+         * Last row per group
+         * @return \Polars\LazyFrame
+         */
+        public function last(): \Polars\LazyFrame {}
+
+        /**
+         * First n rows per group
+         * @return \Polars\LazyFrame
+         */
+        public function head(int $n = 5): \Polars\LazyFrame {}
+
+        /**
+         * Last n rows per group
+         * @return \Polars\LazyFrame
+         */
+        public function tail(int $n = 5): \Polars\LazyFrame {}
+
+        /**
+         * Sum per group
+         * @return \Polars\LazyFrame
+         */
+        public function sum(): \Polars\LazyFrame {}
+
+        /**
+         * Mean per group
+         * @return \Polars\LazyFrame
+         */
+        public function mean(): \Polars\LazyFrame {}
+
+        /**
+         * Median per group
+         * @return \Polars\LazyFrame
+         */
+        public function median(): \Polars\LazyFrame {}
+
+        /**
+         * Min per group
+         * @return \Polars\LazyFrame
+         */
+        public function min(): \Polars\LazyFrame {}
+
+        /**
+         * Max per group
+         * @return \Polars\LazyFrame
+         */
+        public function max(): \Polars\LazyFrame {}
+
         public function __construct() {}
     }
 

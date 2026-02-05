@@ -54,6 +54,8 @@ $result = $df->select([$expr]);
 :caption: Classes
 
 dataframe
+lazyframe
+lazygroupby
 series
 expr
 datatype
