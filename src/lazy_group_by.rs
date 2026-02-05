@@ -4,7 +4,7 @@ use crate::lazy_frame::PhpLazyFrame;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::ZendHashTable;
 use polars::prelude::LazyFrame;
-use polars_plan::dsl::{all, Expr};
+use polars::lazy::dsl::{all, Expr};
 
 /// Create a wildcard Expr that matches all columns
 fn all_expr() -> Expr {

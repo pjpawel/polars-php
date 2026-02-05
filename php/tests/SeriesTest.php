@@ -15,7 +15,7 @@ class SeriesTest extends TestCase
     {
         $s = new Series('numbers', [1, 2, 3, 4, 5]);
         $this->assertInstanceOf(Series::class, $s);
-        $this->assertEquals('numbers', $s->getName());
+        $this->assertEquals('numbers', $s->name);
         $this->assertEquals(5, $s->len());
     }
 
@@ -53,13 +53,13 @@ class SeriesTest extends TestCase
     public function testName(): void
     {
         $s = new Series('test_name', [1, 2, 3]);
-        $this->assertEquals('test_name', $s->getName());
+        $this->assertEquals('test_name', $s->name);
     }
 
     public function testShape(): void
     {
         $s = new Series('x', [1, 2, 3, 4, 5]);
-        $this->assertEquals([5], $s->getShape());
+        $this->assertEquals([5], $s->shape);
     }
 
     public function testLen(): void
@@ -397,15 +397,15 @@ class SeriesTest extends TestCase
     {
         $s = new Series('old', [1, 2, 3]);
         $renamed = $s->rename('new');
-        $this->assertEquals('new', $renamed->getName());
-        $this->assertEquals('old', $s->getName()); // original unchanged
+        $this->assertEquals('new', $renamed->name);
+        $this->assertEquals('old', $s->name); // original unchanged
     }
 
     public function testAlias(): void
     {
         $s = new Series('original', [1, 2, 3]);
         $aliased = $s->alias('aliased');
-        $this->assertEquals('aliased', $aliased->getName());
+        $this->assertEquals('aliased', $aliased->name);
     }
 
     public function testCopy(): void
@@ -444,7 +444,7 @@ class SeriesTest extends TestCase
 
         $series = $df->column('a');
         $this->assertInstanceOf(Series::class, $series);
-        $this->assertEquals('a', $series->getName());
+        $this->assertEquals('a', $series->name);
         $this->assertEquals(3, $series->len());
         $this->assertEquals(1, $series[0]);
         $this->assertEquals(6, $series->sum());

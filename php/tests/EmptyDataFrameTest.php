@@ -19,16 +19,16 @@ class EmptyDataFrameTest extends TestCase
     public function testGetColumns(): void
     {
         $df = new DataFrame([]);
-        $this->assertIsArray($df->getColumns());
-        $this->assertCount(0, $df->getColumns());
+        $this->assertIsArray($df->columns);
+        $this->assertCount(0, $df->columns);
     }
 
     public function testSetColumns(): void
     {
         $df = new DataFrame([]);
-        $this->assertCount(0, $df->getColumns());
+        $this->assertCount(0, $df->columns);
         $this->expectException(Exception::class);
-        $df->setColumns(['a', 'b', 'c']);
+        $df->columns = ['a', 'b', 'c'];
     }
 
     public function testHeight(): void

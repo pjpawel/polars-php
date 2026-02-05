@@ -34,25 +34,25 @@ class SimpleDataFrameTest extends TestCase
     public function testGetColumns(): void
     {
         $df = new DataFrame($this->prepareArray());
-        $this->assertIsArray($df->getColumns());
-        $this->assertCount(3, $df->getColumns());
+        $this->assertIsArray($df->columns);
+        $this->assertCount(3, $df->columns);
     }
 
     public function testSetColumns(): void
     {
         $df = new DataFrame($this->prepareArray());
-        $this->assertCount(3, $df->getColumns());
-        $df->setColumns(['a', 'b', 'c']);
-        $this->assertCount(3, $df->getColumns());
-        $this->assertEquals(['a', 'b', 'c'], $df->getColumns());
+        $this->assertCount(3, $df->columns);
+        $df->columns = ['a', 'b', 'c'];
+        $this->assertCount(3, $df->columns);
+        $this->assertEquals(['a', 'b', 'c'], $df->columns);
     }
 
     public function testSetColumnsException(): void
     {
         $df = new DataFrame($this->prepareArray());
-        $this->assertCount(3, $df->getColumns());
+        $this->assertCount(3, $df->columns);
         $this->expectException(Exception::class);
-        $df->setColumns(['a', 'b', 'c', 'd']);
+        $df->columns = ['a', 'b', 'c', 'd'];
     }
 
     public function testHeight(): void

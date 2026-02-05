@@ -1,6 +1,6 @@
 use ext_php_rs::types::{ZendHashTable, Zval};
 use polars::prelude::AnyValue;
-use polars_plan::dsl::Expr;
+use polars::lazy::dsl::Expr;
 use crate::exception::{ExtResult, PolarsException};
 use crate::expression::PolarsExpr;
 

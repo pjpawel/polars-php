@@ -3,9 +3,8 @@ use ext_php_rs::{php_class, php_enum, php_impl};
 use ext_php_rs::flags::DataType;
 use ext_php_rs::types::{ZendObject, Zval};
 use polars::prelude::ClosedInterval;
-use polars_plan::dsl::{all, col, cols, Expr, lit};
-use polars_plan::plans::NULL;
-use polars_plan::prelude::Literal;
+use polars::lazy::dsl::{all, col, cols, Expr, lit};
+use polars::prelude::{Literal, NULL};
 use crate::exception::{ExtResult, PolarsException};
 
 #[php_class]

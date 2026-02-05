@@ -88,7 +88,6 @@ impl PhpLazyFrame {
 
     /// Get column names
     /// @return string[]
-    #[php(getter)]
     pub fn get_columns(&mut self) -> ExtResult<Vec<String>> {
         let schema = self
             .inner
@@ -99,7 +98,6 @@ impl PhpLazyFrame {
 
     /// Get data types
     /// @return \Polars\DataType[]
-    #[php(getter)]
     pub fn dtypes(&mut self) -> ExtResult<Vec<PolarsDataType>> {
         let schema = self
             .inner
@@ -258,7 +256,7 @@ impl PhpLazyFrame {
             inner: self
                 .inner
                 .clone()
-                .quantile(polars_plan::dsl::lit(quantile), QuantileMethod::Nearest),
+                .quantile(polars::lazy::dsl::lit(quantile), QuantileMethod::Nearest),
         }
     }
 

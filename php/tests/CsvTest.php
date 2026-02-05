@@ -39,7 +39,7 @@ class CsvTest extends TestCase
         $this->assertInstanceOf(DataFrame::class, $df);
         $this->assertEquals(5, $df->height());
         $this->assertEquals(4, $df->width());
-        $this->assertEquals(['name', 'age', 'city', 'salary'], $df->getColumns());
+        $this->assertEquals(['name', 'age', 'city', 'salary'], $df->columns);
     }
 
     public function testFromCsvColumnValues(): void
@@ -74,7 +74,7 @@ class CsvTest extends TestCase
         $this->assertEquals(3, $df->height());
         $this->assertEquals(3, $df->width());
         // Without header, columns get default names
-        $this->assertNotEquals(['name', 'age', 'city'], $df->getColumns());
+        $this->assertNotEquals(['name', 'age', 'city'], $df->columns);
     }
 
     public function testFromCsvCustomSeparator(): void
@@ -83,7 +83,7 @@ class CsvTest extends TestCase
 
         $this->assertInstanceOf(DataFrame::class, $df);
         $this->assertEquals(3, $df->height());
-        $this->assertEquals(['product', 'price', 'quantity'], $df->getColumns());
+        $this->assertEquals(['product', 'price', 'quantity'], $df->columns);
 
         $this->assertEquals('Apple', $df[0]['product']->item());
         $this->assertEquals(1.50, $df[0]['price']->item());
@@ -95,7 +95,7 @@ class CsvTest extends TestCase
         $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/numeric.csv');
 
         $this->assertEquals(5, $df->height());
-        $this->assertEquals(['a', 'b', 'c'], $df->getColumns());
+        $this->assertEquals(['a', 'b', 'c'], $df->columns);
 
         // Verify numeric values
         $this->assertEquals(1, $df[0]['a']->item());
@@ -132,7 +132,7 @@ class CsvTest extends TestCase
         // Read back and verify
         $dfRead = DataFrame::fromCsv($outputPath);
         $this->assertEquals(3, $dfRead->height());
-        $this->assertEquals(['x', 'y'], $dfRead->getColumns());
+        $this->assertEquals(['x', 'y'], $dfRead->columns);
         $this->assertEquals(1, $dfRead[0]['x']->item());
         $this->assertEquals(6, $dfRead[2]['y']->item());
     }
@@ -169,7 +169,7 @@ class CsvTest extends TestCase
         // Read back with same separator
         $dfRead = DataFrame::fromCsv($outputPath, separator: ';');
         $this->assertEquals(3, $dfRead->height());
-        $this->assertEquals(['col1', 'col2'], $dfRead->getColumns());
+        $this->assertEquals(['col1', 'col2'], $dfRead->columns);
     }
 
     public function testWriteCsvRoundTrip(): void
@@ -187,7 +187,7 @@ class CsvTest extends TestCase
 
         $this->assertEquals($original->height(), $loaded->height());
         $this->assertEquals($original->width(), $loaded->width());
-        $this->assertEquals($original->getColumns(), $loaded->getColumns());
+        $this->assertEquals($original->columns, $loaded->columns);
 
         // Verify values
         for ($i = 0; $i < $original->height(); $i++) {

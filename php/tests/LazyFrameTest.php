@@ -67,7 +67,7 @@ class LazyFrameTest extends TestCase
             ->select([Expr::col('name'), Expr::col('age')])
             ->collect();
         $this->assertEquals(2, $result->width());
-        $this->assertEquals(['name', 'age'], $result->getColumns());
+        $this->assertEquals(['name', 'age'], $result->columns);
         $this->assertEquals(4, $result->height());
     }
 
@@ -77,7 +77,7 @@ class LazyFrameTest extends TestCase
             ->select([Expr::col('age')])
             ->collect();
         $this->assertEquals(1, $result->width());
-        $this->assertEquals(['age'], $result->getColumns());
+        $this->assertEquals(['age'], $result->columns);
     }
 
     // Filter
@@ -257,7 +257,7 @@ class LazyFrameTest extends TestCase
             ->drop(['salary'])
             ->collect();
         $this->assertEquals(2, $result->width());
-        $this->assertEquals(['name', 'age'], $result->getColumns());
+        $this->assertEquals(['name', 'age'], $result->columns);
     }
 
     public function testRename(): void
@@ -265,7 +265,7 @@ class LazyFrameTest extends TestCase
         $result = $this->createDf()->lazy()
             ->rename(['name'], ['full_name'])
             ->collect();
-        $this->assertEquals(['full_name', 'age', 'salary'], $result->getColumns());
+        $this->assertEquals(['full_name', 'age', 'salary'], $result->columns);
     }
 
     public function testUnique(): void

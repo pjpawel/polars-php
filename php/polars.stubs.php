@@ -9,6 +9,17 @@ namespace Polars {
 
     class DataFrame implements \ArrayAccess {
         /**
+         * Get columns names
+         * @returns string[]
+         */
+        public $columns;
+
+        /**
+         * @return \Polars\DataType[]
+         */
+        public $dtypes;
+
+        /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
          * @return \Polars\LazyFrame
          */
@@ -36,31 +47,13 @@ namespace Polars {
          * Set value at offset - not supported for DataFrames
          * @return void
          */
-        public function offsetSet(mixed $_offset, mixed $_value): mixed {}
+        public function offsetSet(mixed $_offset, mixed $_value): void {}
 
         /**
          * Unset value at offset - not supported for DataFrames
          * @return void
          */
-        public function offsetUnset(mixed $_offset): mixed {}
-
-        /**
-         * Get columns names
-         * @returns string[]
-         */
-        public function getColumns(): array {}
-
-        /**
-         * Set columns names
-         * @param string[] $columns - length of list must be equal to current length of columns
-         * @return void
-         */
-        public function setColumns(array $columns): mixed {}
-
-        /**
-         * @return \Polars\DataType[]
-         */
-        public function dtypes(): array {}
+        public function offsetUnset(mixed $_offset): void {}
 
         /**
          * @return int Get the number of rows
@@ -156,7 +149,7 @@ namespace Polars {
         /**
          * Write to CSV file
          */
-        public function writeCsv(string $path, bool $includeHeader, string $separator = ","): mixed {}
+        public function writeCsv(string $path, bool $includeHeader, string $separator = ","): void {}
 
         /**
          * Create a new DataFrame from a PHP array
@@ -176,6 +169,21 @@ namespace Polars {
 
     class Series implements \ArrayAccess, \Countable {
         /**
+         * Get the data type of the Series
+         */
+        public $dtype;
+
+        /**
+         * Get the name of the Series
+         */
+        public $name;
+
+        /**
+         * Get the shape of the Series as [length]
+         */
+        public $shape;
+
+        /**
          * Check if an index exists
          */
         public function offsetExists(mixed $offset): bool {}
@@ -189,33 +197,18 @@ namespace Polars {
          * Set value at index - not supported
          * @return void
          */
-        public function offsetSet(mixed $_offset, mixed $_value): mixed {}
+        public function offsetSet(mixed $_offset, mixed $_value): void {}
 
         /**
          * Unset value at index - not supported
          * @return void
          */
-        public function offsetUnset(mixed $_offset): mixed {}
+        public function offsetUnset(mixed $_offset): void {}
 
         /**
          * Get the number of elements (Countable interface)
          */
         public function count(): int {}
-
-        /**
-         * Get the name of the Series
-         */
-        public function getName(): string {}
-
-        /**
-         * Get the data type of the Series
-         */
-        public function getDtype(): \Polars\DataType {}
-
-        /**
-         * Get the shape of the Series as [length]
-         */
-        public function getShape(): array {}
 
         /**
          * Get the number of elements in the Series

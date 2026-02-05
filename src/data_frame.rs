@@ -10,7 +10,7 @@ use polars::prelude::{
     Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, OptFlags, SerReader,
     SerWriter,
 };
-use polars_plan::dsl::Expr;
+use polars::lazy::dsl::Expr;
 
 fn parse_array_to_cols_by_keys(data: &ZendHashTable) -> ExtResult<Vec<Column>> {
     let mut columns = Vec::new();
@@ -294,11 +294,11 @@ impl PhpDataFrame {
     /// Get columns names
     /// @returns string[]
     #[php(getter)]
-    pub fn get_columns(&self) -> Vec<&str> {
+    pub fn get_columns(&self) -> Vec<String> {
         self.inner
             .get_column_names()
             .iter()
-            .map(|c| c.as_str())
+            .map(|c| c.to_string())
             .collect()
     }
 
@@ -306,10 +306,16 @@ impl PhpDataFrame {
     /// @param string[] $columns - length of list must be equal to current length of columns
     /// @return void
     #[php(setter)]
-    pub fn set_columns(&mut self, columns: Vec<&str>) -> ExtResult<()> {
-        Ok(self.inner.set_column_names(columns).map_err(|e| {
-            PolarsException::new(format!("Failed to set DataFrame column names: {}", e))
-        })?)
+    pub fn set_columns(&mut self, columns: Vec<String>) {
+        let str_refs: Vec<&str> = columns.iter().map(|s| s.as_str()).collect();
+        if let Err(e) = self.inner.set_column_names(str_refs) {
+            ext_php_rs::exception::PhpException::default(format!(
+                "Failed to set DataFrame column names: {}",
+                e
+            ))
+            .throw()
+            .ok();
+        }
     }
 
     /// @return \Polars\DataType[]
