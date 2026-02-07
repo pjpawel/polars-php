@@ -343,6 +343,17 @@ $result = $df1->lazy()
 
 ## Miscellaneous
 
+### withRowIndex
+
+```{php:method} withRowIndex(string $name = "index", int $offset = 0): LazyFrame
+```
+
+Add a row index column.
+
+:param string $name: Name of the index column (default: "index")
+:param int $offset: Starting offset (default: 0)
+:returns: LazyFrame
+
 ### reverse
 
 ```{php:method} reverse(): LazyFrame

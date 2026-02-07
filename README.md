@@ -2,7 +2,7 @@
 
 A PHP extension bringing the power of [Polars](https://pola.rs/) DataFrames to PHP.
 
-> **Note:** This extension is under active development. Some features are not yet available. See the [compatibility list](./compatibilty) for current status.
+> **Note:** Some features are not yet available.
 
 ## Features
 
@@ -18,24 +18,9 @@ A PHP extension bringing the power of [Polars](https://pola.rs/) DataFrames to P
 - Linux or macOS (Windows not currently supported)
 - Rust toolchain (for building from source)
 
-## Installation
+## Documentation
 
-### Building from Source
-
-```bash
-# Clone the repository
-git clone https://github.com/pjpawel/polars-php.git
-cd polars-php
-
-# Install PHP dependencies
-cd php && composer install
-
-# Build the extension
-composer build:debug
-
-# Verify installation
-php -d extension=../target/debug/libpolars_php.so -m | grep polars
-```
+Documentation is available at [https://pjpawel.github.io/polars-php/](https://pjpawel.github.io/polars-php/).
 
 ## Quick Start
 
@@ -87,35 +72,27 @@ $df->mean();
 $df->min();
 ```
 
-## API Overview
+## Installation
 
-### DataFrame
+### Building from Source
 
-| Method                                 | Description                   |
-|----------------------------------------|-------------------------------|
-| `new DataFrame(array $data)`           | Create from associative array |
-| `DataFrame::readCsv(string $path)`     | Read from CSV file            |
-| `writeCsv(string $path)`               | Write to CSV file             |
-| `head(int $n = 10)`                    | Get first n rows              |
-| `tail(int $n = 10)`                    | Get last n rows               |
-| `select(array $exprs)`                 | Select/transform columns      |
-| `height()` / `width()` / `shape()`     | Dimensions                    |
-| `min()` / `max()` / `mean()` / `std()` | Aggregations                  |
+```bash
+# Clone the repository
+git clone https://github.com/pjpawel/polars-php.git
+cd polars-php/php
 
-### Expr
+# Build extension for debug
+composer build:debug
 
-| Method                                         | Description                |
-|------------------------------------------------|----------------------------|
-| `Expr::col(string $name)`                      | Reference a column         |
-| `Expr::cols(array $names)`                     | Reference multiple columns |
-| `eq()`, `ne()`, `gt()`, `lt()`, `ge()`, `le()` | Comparisons                |
-| `add()`, `sub()`, `mul()`, `div()`, `pow()`    | Arithmetic                 |
-| `sum()`, `mean()`, `min()`, `max()`, `count()` | Aggregations               |
-| `isBetween($lower, $upper, $closed)`           | Range check                |
+# Or build the extension for release
+# composer build:release
 
-## Documentation
+# Verify installation
+php -d extension=../target/debug/libpolars_php.so -m | grep polars
 
-See the [compatibility directory](./compatibilty) for detailed method availability compared to Python Polars.
+# Run php tests
+composer test:debug
+```
 
 ## Contributing
 
@@ -123,4 +100,4 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ## License
 
-MIT License - see [LICENSE](./LICENSE) for details.
+Apache 2.0 License – see [LICENSE](./LICENSE) for details.

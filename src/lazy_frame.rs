@@ -439,6 +439,20 @@ impl PhpLazyFrame {
 
     // Miscellaneous //
 
+    /// Add a row index column
+    /// @return \Polars\LazyFrame
+    #[php(name = "withRowIndex")]
+    #[php(defaults(name = "index".to_string(), offset = 0))]
+    pub fn with_row_index(&self, name: String, offset: i64) -> Self {
+        use polars::prelude::PlSmallStr;
+        Self {
+            inner: self
+                .inner
+                .clone()
+                .with_row_index(PlSmallStr::from(name), Some(offset as u32)),
+        }
+    }
+
     /// Reverse row order
     /// @return \Polars\LazyFrame
     pub fn reverse(&self) -> Self {

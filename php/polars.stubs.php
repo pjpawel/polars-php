@@ -14,6 +14,11 @@ namespace Polars {
         public $dtypes;
 
         /**
+         * Get schema description as string
+         */
+        public $schema;
+
+        /**
          * Get columns names
          * @returns string[]
          */
@@ -185,6 +190,260 @@ namespace Polars {
         public function writeParquet(string $path): void {}
 
         /**
+         * Sort DataFrame by a column
+         */
+        public function sort(string $column, bool $descending = false, bool $nullsLast = true): \Polars\DataFrame {}
+
+        /**
+         * Drop specified columns
+         * @param string[] $columns
+         */
+        public function drop(array $columns): \Polars\DataFrame {}
+
+        /**
+         * Rename columns
+         * @param string[] $existing Old column names
+         * @param string[] $newNames New column names
+         */
+        public function rename(array $existing, array $newNames): \Polars\DataFrame {}
+
+        /**
+         * Filter rows by expression
+         * @param \Polars\Expr $expression
+         */
+        public function filter(\Polars\Expr $expression): \Polars\DataFrame {}
+
+        /**
+         * Add or modify columns
+         * @param \Polars\Expr[] $expressions
+         */
+        public function withColumns(array $expressions): \Polars\DataFrame {}
+
+        /**
+         * Group by expressions
+         * @param \Polars\Expr[] $expressions
+         * @return \Polars\LazyGroupBy
+         */
+        public function groupBy(array $expressions): \Polars\LazyGroupBy {}
+
+        /**
+         * Aggregate the columns to their sum value.
+         */
+        public function sum(): \Polars\DataFrame {}
+
+        /**
+         * Aggregate the columns to their median value.
+         */
+        public function median(): \Polars\DataFrame {}
+
+        /**
+         * Aggregate the columns to their variance value.
+         */
+        public function variance(int $ddof = 0): \Polars\DataFrame {}
+
+        /**
+         * Aggregate the columns to their quantile value.
+         */
+        public function quantile(float $quantile): \Polars\DataFrame {}
+
+        /**
+         * Aggregate the columns to their null count.
+         */
+        public function nullCount(): \Polars\DataFrame {}
+
+        /**
+         * Aggregate the columns to their product value.
+         */
+        public function product(): \Polars\DataFrame {}
+
+        /**
+         * Get unique rows
+         * @param string[]|null $subset Column names to consider for uniqueness
+         */
+        public function unique(?array $subset = null, string $keep = "first"): \Polars\DataFrame {}
+
+        /**
+         * Drop rows with null values
+         * @param string[]|null $subset Column names to check
+         */
+        public function dropNulls(?array $subset = null): \Polars\DataFrame {}
+
+        /**
+         * Fill null values with a value or expression
+         * @param int|float|string|bool|null|\Polars\Expr $value
+         */
+        public function fillNull(mixed $value): \Polars\DataFrame {}
+
+        /**
+         * Fill NaN values with a value or expression
+         * @param int|float|string|bool|null|\Polars\Expr $value
+         */
+        public function fillNan(mixed $value): \Polars\DataFrame {}
+
+        /**
+         * Reverse row order
+         */
+        public function reverse(): \Polars\DataFrame {}
+
+        /**
+         * Get a slice of rows
+         */
+        public function slice(int $offset, int $length): \Polars\DataFrame {}
+
+        /**
+         * Limit to n rows (alias for head)
+         */
+        public function limit(int $n = 10): \Polars\DataFrame {}
+
+        /**
+         * Join with another DataFrame
+         * @param \Polars\DataFrame $other The right DataFrame
+         * @param \Polars\Expr[] $on Join columns (used for both left and right)
+         * @param string $how Join type: 'inner', 'left', 'right', 'full', 'cross'
+         */
+        public function join(\Polars\DataFrame $other, array $on, string $how = "inner"): \Polars\DataFrame {}
+
+        /**
+         * Add a row index column
+         */
+        public function withRowIndex(string $name = "index", int $offset = 0): \Polars\DataFrame {}
+
+        /**
+         * Convert DataFrame to a PHP array of associative arrays (rows)
+         */
+        public function toArray(): array {}
+
+        /**
+         * Get a single row as an associative array (supports negative indexing)
+         */
+        public function row(int $index): array {}
+
+        /**
+         * Get all rows as array of associative arrays (alias for toArray)
+         */
+        public function rows(): array {}
+
+        /**
+         * Grow this DataFrame vertically by stacking another DataFrame
+         * @param \Polars\DataFrame $other
+         */
+        public function vstack(\Polars\DataFrame $other): \Polars\DataFrame {}
+
+        /**
+         * Grow this DataFrame horizontally by adding Series columns
+         * @param \Polars\Series[] $columns
+         */
+        public function hstack(array $columns): \Polars\DataFrame {}
+
+        /**
+         * Check if two DataFrames are equal
+         * @param \Polars\DataFrame $other
+         */
+        public function equals(\Polars\DataFrame $other): bool {}
+
+        /**
+         * Get the estimated size in bytes
+         */
+        public function estimatedSize(): int {}
+
+        /**
+         * Get the column index by name, returns -1 if not found
+         */
+        public function getColumnIndex(string $name): int {}
+
+        /**
+         * Create an empty copy of the DataFrame (same schema, no rows)
+         */
+        public function clear(): \Polars\DataFrame {}
+
+        /**
+         * Rechunk the DataFrame into contiguous memory
+         */
+        public function rechunk(): \Polars\DataFrame {}
+
+        /**
+         * Shrink memory usage of the DataFrame
+         * @return void
+         */
+        public function shrinkToFit(): void {}
+
+        /**
+         * Get a boolean mask of duplicated rows
+         * @return \Polars\Series
+         */
+        public function isDuplicated(): \Polars\Series {}
+
+        /**
+         * Get a boolean mask of unique rows
+         * @return \Polars\Series
+         */
+        public function isUnique(): \Polars\Series {}
+
+        /**
+         * Shift column values by n positions
+         */
+        public function shift(int $n): \Polars\DataFrame {}
+
+        /**
+         * Take every nth row
+         */
+        public function gatherEvery(int $n, int $offset = 0): \Polars\DataFrame {}
+
+        /**
+         * Cast columns to different data types
+         * @param array $dtypes Associative array of column name => data type string
+         */
+        public function cast(array $dtypes, bool $strict = false): \Polars\DataFrame {}
+
+        /**
+         * Unpivot a DataFrame from wide to long format
+         * @param string[] $on Columns to use as values
+         * @param string[] $index Columns to use as identifier
+         */
+        public function unpivot(array $on, array $index): \Polars\DataFrame {}
+
+        /**
+         * Explode list columns into rows
+         * @param string[] $columns Column names to explode
+         */
+        public function explode(array $columns): \Polars\DataFrame {}
+
+        /**
+         * Get the number of unique values per column
+         */
+        public function nUnique(): \Polars\DataFrame {}
+
+        /**
+         * Get a quick summary of the DataFrame
+         */
+        public function glimpse(): string {}
+
+        /**
+         * Get descriptive statistics (count, null_count, mean, std, min, max, median)
+         */
+        public function describe(): \Polars\DataFrame {}
+
+        /**
+         * Randomly sample n rows
+         */
+        public function sample(int $n, bool $withReplacement = false, bool $shuffle = true, ?int $seed = null): \Polars\DataFrame {}
+
+        /**
+         * Transpose the DataFrame
+         */
+        public function transpose(bool $includeHeader = false, string $headerName = "column"): \Polars\DataFrame {}
+
+        /**
+         * Get the top k rows by a column
+         */
+        public function topK(int $k, string $by): \Polars\DataFrame {}
+
+        /**
+         * Get the bottom k rows by a column
+         */
+        public function bottomK(int $k, string $by): \Polars\DataFrame {}
+
+        /**
          * Create a new DataFrame from a PHP array
          * keys are column name
          *
@@ -202,6 +461,11 @@ namespace Polars {
 
     class Series implements \ArrayAccess, \Countable {
         /**
+         * Get the name of the Series
+         */
+        public $name;
+
+        /**
          * Get the shape of the Series as [length]
          */
         public $shape;
@@ -210,11 +474,6 @@ namespace Polars {
          * Get the data type of the Series
          */
         public $dtype;
-
-        /**
-         * Get the name of the Series
-         */
-        public $name;
 
         /**
          * Check if an index exists
@@ -612,6 +871,26 @@ namespace Polars {
 
         public function hasNulls(): \Polars\Expr {}
 
+        /**
+         * Set an alias for the expression
+         */
+        public function alias(string $name): \Polars\Expr {}
+
+        /**
+         * Shift values by n positions
+         */
+        public function shift(mixed $n): \Polars\Expr {}
+
+        /**
+         * Take every nth value
+         */
+        public function gatherEvery(int $n, int $offset = 0): \Polars\Expr {}
+
+        /**
+         * Cast to a data type
+         */
+        public function cast(string $dtype): \Polars\Expr {}
+
         public function isBetween(mixed $lowerBound, mixed $upperBound, \Polars\ClosedInterval $closed): \Polars\Expr {}
 
         /**
@@ -622,6 +901,8 @@ namespace Polars {
     }
 
     class DataType {
+        public function __toString(): string {}
+
         public function __construct() {}
     }
 
@@ -851,6 +1132,12 @@ namespace Polars {
          * @return \Polars\LazyFrame
          */
         public function join(\Polars\LazyFrame $other, array $on, string $how = "inner"): \Polars\LazyFrame {}
+
+        /**
+         * Add a row index column
+         * @return \Polars\LazyFrame
+         */
+        public function withRowIndex(string $name = "index", int $offset = 0): \Polars\LazyFrame {}
 
         /**
          * Reverse row order

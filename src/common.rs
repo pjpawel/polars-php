@@ -1,8 +1,30 @@
 use ext_php_rs::types::{ZendHashTable, Zval};
-use polars::prelude::AnyValue;
+use polars::prelude::{AnyValue, DataType};
 use polars::lazy::dsl::Expr;
 use crate::exception::{ExtResult, PolarsException};
 use crate::expression::PolarsExpr;
+
+/// Parse a string dtype name to a Polars DataType
+pub fn parse_dtype(dtype: &str) -> ExtResult<DataType> {
+    match dtype.to_lowercase().as_str() {
+        "int8" | "i8" => Ok(DataType::Int8),
+        "int16" | "i16" => Ok(DataType::Int16),
+        "int32" | "i32" => Ok(DataType::Int32),
+        "int64" | "i64" => Ok(DataType::Int64),
+        "uint8" | "u8" => Ok(DataType::UInt8),
+        "uint16" | "u16" => Ok(DataType::UInt16),
+        "uint32" | "u32" => Ok(DataType::UInt32),
+        "uint64" | "u64" => Ok(DataType::UInt64),
+        "float32" | "f32" => Ok(DataType::Float32),
+        "float64" | "f64" => Ok(DataType::Float64),
+        "bool" | "boolean" => Ok(DataType::Boolean),
+        "string" | "str" | "utf8" => Ok(DataType::String),
+        _ => Err(PolarsException::new(format!(
+            "Unknown data type: {}. Supported: int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, bool, string",
+            dtype
+        ))),
+    }
+}
 
 /// Extract Vec<Expr> from a PHP ZendHashTable containing PolarsExpr objects
 pub fn extract_exprs(expressions: &ZendHashTable) -> ExtResult<Vec<Expr>> {

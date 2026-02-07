@@ -6,7 +6,7 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ZendHashTable, Zval};
 use ext_php_rs::zend::ce;
 use polars::prelude::{
-    ChunkCompareEq, ChunkCompareIneq, DataType, FillNullStrategy, IntoSeries, NamedFrom, Series,
+    ChunkCompareEq, ChunkCompareIneq, FillNullStrategy, IntoSeries, NamedFrom, Series,
     SortOptions,
 };
 
@@ -575,27 +575,7 @@ impl PhpSeries {
     /// Cast Series to a different data type
     /// @param string $dtype One of: 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64', 'float32', 'float64', 'bool', 'string'
     pub fn cast(&self, dtype: String) -> ExtResult<Self> {
-        let target_type = match dtype.to_lowercase().as_str() {
-            "int8" | "i8" => DataType::Int8,
-            "int16" | "i16" => DataType::Int16,
-            "int32" | "i32" => DataType::Int32,
-            "int64" | "i64" => DataType::Int64,
-            "uint8" | "u8" => DataType::UInt8,
-            "uint16" | "u16" => DataType::UInt16,
-            "uint32" | "u32" => DataType::UInt32,
-            "uint64" | "u64" => DataType::UInt64,
-            "float32" | "f32" => DataType::Float32,
-            "float64" | "f64" => DataType::Float64,
-            "bool" | "boolean" => DataType::Boolean,
-            "string" | "str" | "utf8" => DataType::String,
-            _ => {
-                return Err(PolarsException::new(format!(
-                    "Unknown data type: {}. Supported: int8, int16, int32, int64, uint8, uint16, uint32, uint64, float32, float64, bool, string",
-                    dtype
-                )));
-            }
-        };
-
+        let target_type = crate::common::parse_dtype(&dtype)?;
         let casted = self.inner.cast(&target_type).map_err(|e| {
             PolarsException::new(format!("Cast to {} failed: {}", dtype, e))
         })?;

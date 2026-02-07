@@ -7,10 +7,11 @@ use polars::prelude::DataType;
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolarsDataType(DataType);
 
+#[php_impl]
 impl PolarsDataType {
 
-    // #[php(name = "__toString")]
-    // pub fn __to_string(&self) -> String { self.0.to_string() }
+    #[php(name = "__toString")]
+    pub fn __to_string(&self) -> String { self.0.to_string() }
 
 }
 

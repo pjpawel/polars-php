@@ -8,7 +8,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 ext-php-rs = "0.15.6"
-polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones"] }
+polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones", "random", "pivot"] }
 
 [profile.release]
 opt-level = 3

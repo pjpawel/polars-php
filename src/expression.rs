@@ -226,6 +226,29 @@ impl PolarsExpr {
         self.0.clone().null_count().gt(0).into()
     }
 
+    /// Set an alias for the expression
+    pub fn alias(&self, name: String) -> Self {
+        self.0.clone().alias(&name).into()
+    }
+
+    /// Shift values by n positions
+    pub fn shift(&self, n: &Zval) -> ExtResult<Self> {
+        let n_expr = zval_to_expr(n)?;
+        Ok(self.0.clone().shift(n_expr).into())
+    }
+
+    /// Take every nth value
+    #[php(name = "gatherEvery", defaults(offset = 0))]
+    pub fn gather_every(&self, n: i64, offset: i64) -> Self {
+        self.0.clone().gather_every(n as usize, offset as usize).into()
+    }
+
+    /// Cast to a data type
+    pub fn cast(&self, dtype: String) -> ExtResult<Self> {
+        let target = crate::common::parse_dtype(&dtype)?;
+        Ok(self.0.clone().cast(target).into())
+    }
+
     #[allow(non_snake_case)]
     #[php(name="isBetween")]
     pub fn is_between(
