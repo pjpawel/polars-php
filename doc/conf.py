@@ -3,7 +3,7 @@
 project = 'Polars-PHP'
 copyright = '2025, Paweł Podgórski'
 author = 'Paweł Podgórski'
-release = '0.2.0'
+release = '0.3.0'
 
 extensions = [
     'myst_parser',
