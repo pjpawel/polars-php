@@ -9,15 +9,15 @@ namespace Polars {
 
     class DataFrame implements \ArrayAccess {
         /**
+         * @return \Polars\DataType[]
+         */
+        public $dtypes;
+
+        /**
          * Get columns names
          * @returns string[]
          */
         public $columns;
-
-        /**
-         * @return \Polars\DataType[]
-         */
-        public $dtypes;
 
         /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
@@ -144,12 +144,45 @@ namespace Polars {
          */
         public function __toString(): string {}
 
-        public static function fromCsv(string $path, bool $headerIncluded = true, string $separator = ","): \Polars\DataFrame {}
+        /**
+         * Read a DataFrame from a CSV file
+         */
+        public static function readCsv(string $path, bool $hasHeader = true, string $separator = ","): \Polars\DataFrame {}
+
+        /**
+         * Read a DataFrame from a JSON file
+         */
+        public static function readJson(string $path): \Polars\DataFrame {}
+
+        /**
+         * Read a DataFrame from a NDJSON (newline-delimited JSON) file
+         */
+        public static function readNdjson(string $path): \Polars\DataFrame {}
+
+        /**
+         * Read a DataFrame from a Parquet file
+         */
+        public static function readParquet(string $path): \Polars\DataFrame {}
 
         /**
          * Write to CSV file
          */
         public function writeCsv(string $path, bool $includeHeader, string $separator = ","): void {}
+
+        /**
+         * Write DataFrame to a JSON file
+         */
+        public function writeJson(string $path): void {}
+
+        /**
+         * Write DataFrame to a NDJSON (newline-delimited JSON) file
+         */
+        public function writeNdjson(string $path): void {}
+
+        /**
+         * Write DataFrame to a Parquet file
+         */
+        public function writeParquet(string $path): void {}
 
         /**
          * Create a new DataFrame from a PHP array
@@ -169,6 +202,11 @@ namespace Polars {
 
     class Series implements \ArrayAccess, \Countable {
         /**
+         * Get the shape of the Series as [length]
+         */
+        public $shape;
+
+        /**
          * Get the data type of the Series
          */
         public $dtype;
@@ -177,11 +215,6 @@ namespace Polars {
          * Get the name of the Series
          */
         public $name;
-
-        /**
-         * Get the shape of the Series as [length]
-         */
-        public $shape;
 
         /**
          * Check if an index exists
@@ -594,6 +627,21 @@ namespace Polars {
 
     class LazyFrame {
         /**
+         * Scan a CSV file into a LazyFrame
+         */
+        public static function scanCsv(string $path, bool $hasHeader = true, string $separator = ","): \Polars\LazyFrame {}
+
+        /**
+         * Scan a NDJSON file into a LazyFrame
+         */
+        public static function scanNdjson(string $path): \Polars\LazyFrame {}
+
+        /**
+         * Scan a Parquet file into a LazyFrame
+         */
+        public static function scanParquet(string $path): \Polars\LazyFrame {}
+
+        /**
          * Execute the lazy query and return a DataFrame
          * @return \Polars\DataFrame
          */
@@ -821,6 +869,24 @@ namespace Polars {
          * @return \Polars\LazyFrame
          */
         public function cache(): \Polars\LazyFrame {}
+
+        /**
+         * Sink the LazyFrame to a CSV file and return the result as a DataFrame
+         * @return \Polars\DataFrame
+         */
+        public function sinkCsv(string $path, bool $includeHeader = true, string $separator = ","): \Polars\DataFrame {}
+
+        /**
+         * Sink the LazyFrame to a Parquet file and return the result as a DataFrame
+         * @return \Polars\DataFrame
+         */
+        public function sinkParquet(string $path): \Polars\DataFrame {}
+
+        /**
+         * Sink the LazyFrame to a NDJSON file and return the result as a DataFrame
+         * @return \Polars\DataFrame
+         */
+        public function sinkNdjson(string $path): \Polars\DataFrame {}
 
         /**
          * String representation showing the query plan

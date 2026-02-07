@@ -7,7 +7,8 @@ use crate::lazy_group_by::PhpLazyGroupBy;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ZendHashTable, Zval};
 use polars::prelude::{
-    JoinArgs, JoinType, LazyFrame, Selector, SortMultipleOptions, UniqueKeepStrategy,
+    JoinArgs, JoinType, LazyCsvReader, LazyFileListReader, LazyFrame, LazyJsonLineReader, PlPath,
+    ScanArgsParquet, Selector, SortMultipleOptions, UniqueKeepStrategy,
 };
 
 #[php_class]
@@ -20,6 +21,41 @@ pub struct PhpLazyFrame {
 #[php_impl]
 #[php(change_method_case = "camelCase")]
 impl PhpLazyFrame {
+    // Scan Methods (static constructors) //
+
+    /// Scan a CSV file into a LazyFrame
+    #[allow(non_snake_case)]
+    #[php(defaults(hasHeader = true, separator = ",".to_string()))]
+    pub fn scan_csv(path: String, hasHeader: bool, separator: String) -> ExtResult<Self> {
+        if separator.len() != 1 {
+            return Err(PolarsException::new(
+                "Separator must of length 1".to_string(),
+            ));
+        }
+        let sep = separator.as_bytes()[0];
+        let lf = LazyCsvReader::new(PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))))
+            .with_has_header(hasHeader)
+            .map_parse_options(|opts| opts.with_separator(sep))
+            .finish()
+            .map_err(|e| PolarsException::new(format!("Failed to scan CSV: {}", e)))?;
+        Ok(Self { inner: lf })
+    }
+
+    /// Scan a NDJSON file into a LazyFrame
+    pub fn scan_ndjson(path: String) -> ExtResult<Self> {
+        let lf = LazyJsonLineReader::new(PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))))
+            .finish()
+            .map_err(|e| PolarsException::new(format!("Failed to scan NDJSON: {}", e)))?;
+        Ok(Self { inner: lf })
+    }
+
+    /// Scan a Parquet file into a LazyFrame
+    pub fn scan_parquet(path: String) -> ExtResult<Self> {
+        let lf = LazyFrame::scan_parquet(PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))), ScanArgsParquet::default())
+            .map_err(|e| PolarsException::new(format!("Failed to scan Parquet: {}", e)))?;
+        Ok(Self { inner: lf })
+    }
+
     // Core //
 
     /// Execute the lazy query and return a DataFrame
@@ -432,6 +468,81 @@ impl PhpLazyFrame {
         Self {
             inner: self.inner.clone().cache(),
         }
+    }
+
+    // Sink Methods //
+
+    /// Sink the LazyFrame to a CSV file and return the result as a DataFrame
+    /// @return \Polars\DataFrame
+    #[allow(non_snake_case)]
+    #[php(defaults(includeHeader = true, separator = ",".to_string()))]
+    pub fn sink_csv(
+        &self,
+        path: String,
+        includeHeader: bool,
+        separator: String,
+    ) -> ExtResult<PhpDataFrame> {
+        use polars::prelude::{CsvWriterOptions, SerializeOptions, SinkOptions, SinkTarget};
+
+        if separator.len() != 1 {
+            return Err(PolarsException::new(
+                "Separator must of length 1".to_string(),
+            ));
+        }
+        let sep = separator.as_bytes()[0];
+        let target = SinkTarget::Path(PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))));
+        let options = CsvWriterOptions {
+            include_header: includeHeader,
+            serialize_options: SerializeOptions {
+                separator: sep,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let df = self
+            .inner
+            .clone()
+            .sink_csv(target, options, None, SinkOptions::default())
+            .map_err(|e| PolarsException::new(format!("Failed to sink CSV: {}", e)))?
+            .collect()
+            .map_err(|e| PolarsException::new(format!("Failed to collect after sink CSV: {}", e)))?;
+        Ok(df.into())
+    }
+
+    /// Sink the LazyFrame to a Parquet file and return the result as a DataFrame
+    /// @return \Polars\DataFrame
+    pub fn sink_parquet(&self, path: String) -> ExtResult<PhpDataFrame> {
+        use polars::prelude::{ParquetWriteOptions, SinkOptions, SinkTarget};
+
+        let target = SinkTarget::Path(PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))));
+        let df = self
+            .inner
+            .clone()
+            .sink_parquet(target, ParquetWriteOptions::default(), None, SinkOptions::default())
+            .map_err(|e| PolarsException::new(format!("Failed to sink Parquet: {}", e)))?
+            .collect()
+            .map_err(|e| {
+                PolarsException::new(format!("Failed to collect after sink Parquet: {}", e))
+            })?;
+        Ok(df.into())
+    }
+
+    /// Sink the LazyFrame to a NDJSON file and return the result as a DataFrame
+    /// @return \Polars\DataFrame
+    pub fn sink_ndjson(&self, path: String) -> ExtResult<PhpDataFrame> {
+        use polars::prelude::{JsonWriterOptions, SinkOptions, SinkTarget};
+
+        let target = SinkTarget::Path(PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))));
+        let df = self
+            .inner
+            .clone()
+            .sink_json(target, JsonWriterOptions::default(), None, SinkOptions::default())
+            .map_err(|e| PolarsException::new(format!("Failed to sink NDJSON: {}", e)))?
+            .collect()
+            .map_err(|e| {
+                PolarsException::new(format!("Failed to collect after sink NDJSON: {}", e))
+            })?;
+        Ok(df.into())
     }
 
     /// String representation showing the query plan

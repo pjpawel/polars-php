@@ -40,8 +40,8 @@ php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit --filter te
 ### Rust Source (`src/`)
 
 - **lib.rs**: Module entry point, registers PHP classes/enums via `#[php_module]`
-- **data_frame.rs**: `PhpDataFrame` class (`Polars\DataFrame`) - wraps Polars DataFrame, handles CSV I/O, array access, aggregations
-- **lazy_frame.rs**: `PhpLazyFrame` class (`Polars\LazyFrame`) - wraps Polars LazyFrame for lazy evaluation with query optimization
+- **data_frame.rs**: `PhpDataFrame` class (`Polars\DataFrame`) - wraps Polars DataFrame, handles IO (CSV, JSON, NDJSON, Parquet), array access, aggregations
+- **lazy_frame.rs**: `PhpLazyFrame` class (`Polars\LazyFrame`) - wraps Polars LazyFrame for lazy evaluation with query optimization, scan (CSV, NDJSON, Parquet) and sink methods
 - **lazy_group_by.rs**: `PhpLazyGroupBy` class (`Polars\LazyGroupBy`) - wraps grouped lazy operations, stores LazyFrame + group-by expressions
 - **series.rs**: `PhpSeries` class (`Polars\Series`) - wraps Polars Series, one-dimensional array with element access, aggregations, comparisons
 - **expression.rs**: `PolarsExpr` class (`Polars\Expr`) - expression builder for column operations, comparisons, aggregations
@@ -77,9 +77,17 @@ pub fn get_name(&self) -> String { ... }  // Accessed as $obj->getName() in PHP
 PhpDataType::Bool | PhpDataType::True | PhpDataType::False => { ... }
 ```
 
-**Selector vs Expr:** In Polars 0.51, `polars_plan::dsl::all()` returns `Selector`, not `Expr`. Use `.as_expr()` or `Expr::from(all())` to convert. Methods like `drop()`, `unique()`, `drop_nulls()` on `LazyFrame` take `Selector` type (use `Selector::ByName { names, strict }` for column name lists).
+**Selector vs Expr:** In Polars 0.52, `polars_plan::dsl::all()` returns `Selector`, not `Expr`. Use `.as_expr()` or `Expr::from(all())` to convert. Methods like `drop()`, `unique()`, `drop_nulls()` on `LazyFrame` take `Selector` type (use `Selector::ByName { names, strict }` for column name lists).
 
 **LazyGroupBy storage:** Polars `LazyGroupBy` consumes self on method calls. Store `LazyFrame` + `Vec<Expr>` and reconstruct the `LazyGroupBy` for each operation (same pattern as python-polars bindings).
+
+**PlPath Construction:** `PlPath` is an enum (`PlPath::Local(Arc<Path>)` / `PlPath::Cloud(...)`). It has no `From<String>` or `From<&str>` impl. Construct local paths with:
+```rust
+PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path)))
+```
+Required by `LazyCsvReader::new()`, `LazyJsonLineReader::new()`, `LazyFrame::scan_parquet()`, and `SinkTarget::Path()`.
+
+**LazyCsvReader parse options:** Use `map_parse_options(|opts| opts.with_separator(sep))`, not `with_parse_options()`.
 
 ### PHP Stubs
 
@@ -92,8 +100,8 @@ PHPUnit tests validate the extension. Extension is loaded dynamically via `-d ex
 ## Dependencies
 
 - **ext-php-rs**: Rust-PHP bindings framework
-- **polars**: DataFrame library (with lazy, csv, parquet, json features)
-- **polars-plan**: Expression DSL (with mode, is_between features)
+- **polars**: DataFrame library (with lazy, csv, parquet, json, round_series, product, mode, is_between, timezones features)
+- **polars-plan**: Expression DSL (mode, is_between features provided via polars umbrella crate)
 
 ## Documentation (`doc/`)
 

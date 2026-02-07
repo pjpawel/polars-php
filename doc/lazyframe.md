@@ -5,7 +5,65 @@
 
 The `LazyFrame` class represents a lazy computation graph. Operations on a LazyFrame are not executed immediately — instead, they build a query plan that is optimized and executed when `collect()` is called.
 
-LazyFrame cannot be constructed directly. Use `DataFrame::lazy()` to create one.
+Create a LazyFrame via `DataFrame::lazy()`, or by scanning a file with `LazyFrame::scanCsv()`, `LazyFrame::scanNdjson()`, or `LazyFrame::scanParquet()`.
+
+## Scan Methods (Static Constructors)
+
+### scanCsv
+
+```{php:method} static scanCsv(string $path, bool $hasHeader = true, string $separator = ","): LazyFrame
+```
+
+Scan a CSV file into a LazyFrame. The file is not fully read into memory — instead, a query plan is created that reads data on demand.
+
+:param string $path: Path to the CSV file
+:param bool $hasHeader: Whether the first row contains column headers (default: true)
+:param string $separator: Column separator character (default: ",")
+:returns: LazyFrame
+:raises Polars\\Exception: If file cannot be scanned
+
+**Example:**
+
+```php
+$lf = LazyFrame::scanCsv('data.csv');
+$df = $lf->filter(Expr::col('age')->gt(30))->collect();
+```
+
+### scanNdjson
+
+```{php:method} static scanNdjson(string $path): LazyFrame
+```
+
+Scan a NDJSON (newline-delimited JSON) file into a LazyFrame.
+
+:param string $path: Path to the NDJSON file
+:returns: LazyFrame
+:raises Polars\\Exception: If file cannot be scanned
+
+**Example:**
+
+```php
+$lf = LazyFrame::scanNdjson('data.ndjson');
+$df = $lf->select([Expr::col('name'), Expr::col('age')])->collect();
+```
+
+### scanParquet
+
+```{php:method} static scanParquet(string $path): LazyFrame
+```
+
+Scan a Parquet file into a LazyFrame. Parquet scanning is highly efficient due to columnar format and predicate pushdown.
+
+:param string $path: Path to the Parquet file
+:returns: LazyFrame
+:raises Polars\\Exception: If file cannot be scanned
+
+**Example:**
+
+```php
+$lf = LazyFrame::scanParquet('data.parquet');
+$df = $lf->filter(Expr::col('salary')->gt(50000))->collect();
+```
 
 ## Core Methods
 
@@ -307,6 +365,66 @@ Return the query plan as a string.
 ```
 
 Cache intermediate results.
+
+## Sink Methods
+
+Sink methods execute the lazy query plan and write results directly to a file. They return a DataFrame with the result.
+
+### sinkCsv
+
+```{php:method} sinkCsv(string $path, bool $includeHeader = true, string $separator = ","): DataFrame
+```
+
+Sink the LazyFrame to a CSV file.
+
+:param string $path: Output file path
+:param bool $includeHeader: Whether to include column headers (default: true)
+:param string $separator: Column separator character (default: ",")
+:returns: DataFrame
+:raises Polars\\Exception: If sink operation fails
+
+**Example:**
+
+```php
+$df = new DataFrame(['a' => [1, 2, 3], 'b' => [4, 5, 6]]);
+$df->lazy()
+    ->filter(Expr::col('a')->gt(1))
+    ->sinkCsv('output.csv');
+```
+
+### sinkParquet
+
+```{php:method} sinkParquet(string $path): DataFrame
+```
+
+Sink the LazyFrame to a Parquet file.
+
+:param string $path: Output file path
+:returns: DataFrame
+:raises Polars\\Exception: If sink operation fails
+
+**Example:**
+
+```php
+$df->lazy()->sinkParquet('output.parquet');
+```
+
+### sinkNdjson
+
+```{php:method} sinkNdjson(string $path): DataFrame
+```
+
+Sink the LazyFrame to a NDJSON (newline-delimited JSON) file.
+
+:param string $path: Output file path
+:returns: DataFrame
+:raises Polars\\Exception: If sink operation fails
+
+**Example:**
+
+```php
+$df->lazy()->sinkNdjson('output.ndjson');
+```
 
 ### __toString
 

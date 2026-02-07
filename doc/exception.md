@@ -67,7 +67,7 @@ use Polars\Expr;
 use Polars\Exception;
 
 try {
-    $df = DataFrame::fromCsv('nonexistent.csv');
+    $df = DataFrame::readCsv('nonexistent.csv');
 } catch (Exception $e) {
     // Handle file not found
     echo "Could not load file: " . $e->getMessage();

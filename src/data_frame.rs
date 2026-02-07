@@ -7,8 +7,8 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
 use ext_php_rs::zend::ce;
 use polars::prelude::{
-    Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, OptFlags, SerReader,
-    SerWriter,
+    Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, JsonFormat,
+    JsonReader, JsonWriter, OptFlags, ParquetWriter, SerReader, SerWriter,
 };
 use polars::lazy::dsl::Expr;
 
@@ -580,27 +580,60 @@ impl PhpDataFrame {
         format!("{}", self.inner)
     }
 
+    /// Read a DataFrame from a CSV file
     #[allow(non_snake_case)]
-    #[php(defaults(headerIncluded = true, separator = ",".to_string()))]
-    pub fn from_csv(
+    #[php(defaults(hasHeader = true, separator = ",".to_string()))]
+    pub fn read_csv(
         path: String,
-        headerIncluded: bool,
+        hasHeader: bool,
         separator: String,
     ) -> ExtResult<Self> {
         if separator.len() != 1 {
             return Err(PolarsException::new("Separator must of length 1".to_string()));
         }
         let df = CsvReadOptions::default()
-            .with_has_header(headerIncluded)
+            .with_has_header(hasHeader)
             .with_parse_options(
                 CsvParseOptions::default()
                     .with_try_parse_dates(true)
                     .with_separator(separator.as_bytes().first().unwrap().to_owned())
             )
             .try_into_reader_with_file_path(Some(path.into()))
-            .map_err(|e| PolarsException::new(format!("Failed to read CSV: {}", e.to_string())))?
+            .map_err(|e| PolarsException::new(format!("Failed to read CSV: {}", e)))?
             .finish()
-            .map_err(|e| PolarsException::new(format!("Failed to create df from CSV file: {}", e.to_string())))?;
+            .map_err(|e| PolarsException::new(format!("Failed to create df from CSV file: {}", e)))?;
+        Ok(Self { inner: df })
+    }
+
+    /// Read a DataFrame from a JSON file
+    pub fn read_json(path: String) -> ExtResult<Self> {
+        let file = std::fs::File::open(&path)
+            .map_err(|e| PolarsException::new(format!("Failed to open file: {}", e)))?;
+        let df = JsonReader::new(file)
+            .with_json_format(JsonFormat::Json)
+            .finish()
+            .map_err(|e| PolarsException::new(format!("Failed to read JSON: {}", e)))?;
+        Ok(Self { inner: df })
+    }
+
+    /// Read a DataFrame from a NDJSON (newline-delimited JSON) file
+    pub fn read_ndjson(path: String) -> ExtResult<Self> {
+        let file = std::fs::File::open(&path)
+            .map_err(|e| PolarsException::new(format!("Failed to open file: {}", e)))?;
+        let df = JsonReader::new(file)
+            .with_json_format(JsonFormat::JsonLines)
+            .finish()
+            .map_err(|e| PolarsException::new(format!("Failed to read NDJSON: {}", e)))?;
+        Ok(Self { inner: df })
+    }
+
+    /// Read a DataFrame from a Parquet file
+    pub fn read_parquet(path: String) -> ExtResult<Self> {
+        let file = std::fs::File::open(&path)
+            .map_err(|e| PolarsException::new(format!("Failed to open file: {}", e)))?;
+        let df = polars::prelude::ParquetReader::new(file)
+            .finish()
+            .map_err(|e| PolarsException::new(format!("Failed to read Parquet: {}", e)))?;
         Ok(Self { inner: df })
     }
 
@@ -624,6 +657,44 @@ impl PhpDataFrame {
             .with_separator(*separator.as_bytes().first().unwrap())
             .finish(&mut self.inner.clone())
             .map_err(|e| PolarsException::new(format!("Failed to write CSV: {}", e)))?;
+
+        Ok(())
+    }
+
+    /// Write DataFrame to a JSON file
+    pub fn write_json(&self, path: String) -> ExtResult<()> {
+        let mut file = std::fs::File::create(&path)
+            .map_err(|e| PolarsException::new(format!("Failed to create file: {}", e)))?;
+
+        JsonWriter::new(&mut file)
+            .with_json_format(JsonFormat::Json)
+            .finish(&mut self.inner.clone())
+            .map_err(|e| PolarsException::new(format!("Failed to write JSON: {}", e)))?;
+
+        Ok(())
+    }
+
+    /// Write DataFrame to a NDJSON (newline-delimited JSON) file
+    pub fn write_ndjson(&self, path: String) -> ExtResult<()> {
+        let mut file = std::fs::File::create(&path)
+            .map_err(|e| PolarsException::new(format!("Failed to create file: {}", e)))?;
+
+        JsonWriter::new(&mut file)
+            .with_json_format(JsonFormat::JsonLines)
+            .finish(&mut self.inner.clone())
+            .map_err(|e| PolarsException::new(format!("Failed to write NDJSON: {}", e)))?;
+
+        Ok(())
+    }
+
+    /// Write DataFrame to a Parquet file
+    pub fn write_parquet(&self, path: String) -> ExtResult<()> {
+        let file = std::fs::File::create(&path)
+            .map_err(|e| PolarsException::new(format!("Failed to create file: {}", e)))?;
+
+        ParquetWriter::new(file)
+            .finish(&mut self.inner.clone())
+            .map_err(|e| PolarsException::new(format!("Failed to write Parquet: {}", e)))?;
 
         Ok(())
     }

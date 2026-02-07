@@ -32,9 +32,9 @@ class CsvTest extends TestCase
 
     // Basic CSV Loading
 
-    public function testFromCsvSimple(): void
+    public function testReadCsvSimple(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/simple.csv');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/simple.csv');
 
         $this->assertInstanceOf(DataFrame::class, $df);
         $this->assertEquals(5, $df->height());
@@ -42,9 +42,9 @@ class CsvTest extends TestCase
         $this->assertEquals(['name', 'age', 'city', 'salary'], $df->columns);
     }
 
-    public function testFromCsvColumnValues(): void
+    public function testReadCsvColumnValues(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/simple.csv');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/simple.csv');
 
         // Check first row values
         $firstRow = $df[0];
@@ -54,9 +54,9 @@ class CsvTest extends TestCase
         $this->assertEquals(50000, $firstRow['salary']->item());
     }
 
-    public function testFromCsvLastRow(): void
+    public function testReadCsvLastRow(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/simple.csv');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/simple.csv');
 
         // Check last row using negative index
         $lastRow = $df[-1];
@@ -66,9 +66,9 @@ class CsvTest extends TestCase
         $this->assertEquals(70000, $lastRow['salary']->item());
     }
 
-    public function testFromCsvNoHeader(): void
+    public function testReadCsvNoHeader(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/no_header.csv', headerIncluded: false);
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/no_header.csv', hasHeader: false);
 
         $this->assertInstanceOf(DataFrame::class, $df);
         $this->assertEquals(3, $df->height());
@@ -77,9 +77,9 @@ class CsvTest extends TestCase
         $this->assertNotEquals(['name', 'age', 'city'], $df->columns);
     }
 
-    public function testFromCsvCustomSeparator(): void
+    public function testReadCsvCustomSeparator(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/semicolon.csv', separator: ';');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/semicolon.csv', separator: ';');
 
         $this->assertInstanceOf(DataFrame::class, $df);
         $this->assertEquals(3, $df->height());
@@ -90,9 +90,9 @@ class CsvTest extends TestCase
         $this->assertEquals(100, $df[0]['quantity']->item());
     }
 
-    public function testFromCsvNumeric(): void
+    public function testReadCsvNumeric(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/numeric.csv');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/numeric.csv');
 
         $this->assertEquals(5, $df->height());
         $this->assertEquals(['a', 'b', 'c'], $df->columns);
@@ -103,16 +103,16 @@ class CsvTest extends TestCase
         $this->assertEquals(300, $df[2]['c']->item());
     }
 
-    public function testFromCsvNonExistentFile(): void
+    public function testReadCsvNonExistentFile(): void
     {
         $this->expectException(Exception::class);
-        DataFrame::fromCsv(self::FIXTURES_DIR . '/nonexistent.csv');
+        DataFrame::readCsv(self::FIXTURES_DIR . '/nonexistent.csv');
     }
 
-    public function testFromCsvInvalidSeparator(): void
+    public function testReadCsvInvalidSeparator(): void
     {
         $this->expectException(Exception::class);
-        DataFrame::fromCsv(self::FIXTURES_DIR . '/simple.csv', separator: 'too_long');
+        DataFrame::readCsv(self::FIXTURES_DIR . '/simple.csv', separator: 'too_long');
     }
 
     // CSV Writing
@@ -130,7 +130,7 @@ class CsvTest extends TestCase
         $this->assertFileExists($outputPath);
 
         // Read back and verify
-        $dfRead = DataFrame::fromCsv($outputPath);
+        $dfRead = DataFrame::readCsv($outputPath);
         $this->assertEquals(3, $dfRead->height());
         $this->assertEquals(['x', 'y'], $dfRead->columns);
         $this->assertEquals(1, $dfRead[0]['x']->item());
@@ -150,7 +150,7 @@ class CsvTest extends TestCase
         $this->assertFileExists($outputPath);
 
         // Read back without header
-        $dfRead = DataFrame::fromCsv($outputPath, headerIncluded: false);
+        $dfRead = DataFrame::readCsv($outputPath, hasHeader: false);
         $this->assertEquals(2, $dfRead->height());
     }
 
@@ -167,7 +167,7 @@ class CsvTest extends TestCase
         $this->assertFileExists($outputPath);
 
         // Read back with same separator
-        $dfRead = DataFrame::fromCsv($outputPath, separator: ';');
+        $dfRead = DataFrame::readCsv($outputPath, separator: ';');
         $this->assertEquals(3, $dfRead->height());
         $this->assertEquals(['col1', 'col2'], $dfRead->columns);
     }
@@ -183,7 +183,7 @@ class CsvTest extends TestCase
         $outputPath = self::OUTPUT_DIR . '/roundtrip.csv';
         $original->writeCsv($outputPath, includeHeader: true);
 
-        $loaded = DataFrame::fromCsv($outputPath);
+        $loaded = DataFrame::readCsv($outputPath);
 
         $this->assertEquals($original->height(), $loaded->height());
         $this->assertEquals($original->width(), $loaded->width());
@@ -210,7 +210,7 @@ class CsvTest extends TestCase
 
     public function testCsvAggregations(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/numeric.csv');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/numeric.csv');
 
         // Sum: a=15, b=150, c=1500
         $sum = $df->select([\Polars\Expr::col('a')->sum()]);
@@ -237,7 +237,7 @@ class CsvTest extends TestCase
 
     public function testCsvWithHeadTail(): void
     {
-        $df = DataFrame::fromCsv(self::FIXTURES_DIR . '/simple.csv');
+        $df = DataFrame::readCsv(self::FIXTURES_DIR . '/simple.csv');
 
         $head = $df->head(2);
         $this->assertEquals(2, $head->height());

@@ -138,8 +138,14 @@ All attributes that can be modified in place will have getter and setter methods
 | with_row_count             |                        | [ ]             | [ ]        |                                                                                       |
 | with_row_index             |                        | [ ]             | [ ]        |                                                                                       |
 | **I/O**                    |                        | -----           | -----      |                                                                                       |
-| read_csv (function)        | fromCsv                | [X]             | [ ]        | Static method on DataFrame class                                                      |
+| read_csv (function)        | readCsv                | [X]             | [ ]        | Static method on DataFrame class                                                      |
 | write_csv                  | writeCsv               | [X]             | [ ]        |                                                                                       |
+| read_json                  | readJson               | [X]             | [ ]        | Static method on DataFrame class                                                      |
+| write_json                 | writeJson              | [X]             | [ ]        |                                                                                       |
+| read_ndjson                | readNdjson             | [X]             | [ ]        | Static method on DataFrame class                                                      |
+| write_ndjson               | writeNdjson            | [X]             | [ ]        |                                                                                       |
+| read_parquet               | readParquet            | [X]             | [ ]        | Static method on DataFrame class                                                      |
+| write_parquet              | writeParquet           | [X]             | [ ]        |                                                                                       |
 | **Miscellaneous**          |                        | -----           | -----      |                                                                                       |
 | __str__                    | __toString             | [X]             | [ ]        |                                                                                       |
 

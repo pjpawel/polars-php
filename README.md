@@ -75,7 +75,7 @@ $subset = $df[['name', 'age']]; // Multiple columns
 $specificRow = $df[['col1', 1]]; //Specific row
 
 // Read from CSV
-$df = DataFrame::fromCsv('data.csv');
+$df = DataFrame::readCsv('data.csv');
 
 // Expressions for filtering and transformations
 $expr = Expr::col('age')->gt(25);
@@ -94,7 +94,7 @@ $df->min();
 | Method                                 | Description                   |
 |----------------------------------------|-------------------------------|
 | `new DataFrame(array $data)`           | Create from associative array |
-| `DataFrame::fromCsv(string $path)`     | Read from CSV file            |
+| `DataFrame::readCsv(string $path)`     | Read from CSV file            |
 | `writeCsv(string $path)`               | Write to CSV file             |
 | `head(int $n = 10)`                    | Get first n rows              |
 | `tail(int $n = 10)`                    | Get last n rows               |

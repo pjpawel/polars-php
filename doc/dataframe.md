@@ -28,15 +28,15 @@ $df = new DataFrame([
 
 ## Static Methods
 
-### fromCsv
+### readCsv
 
-```{php:method} static fromCsv(string $path, bool $headerIncluded = true, string $separator = ","): DataFrame
+```{php:method} static readCsv(string $path, bool $hasHeader = true, string $separator = ","): DataFrame
 ```
 
 Read a DataFrame from a CSV file.
 
 :param string $path: Path to the CSV file
-:param bool $headerIncluded: Whether the first row contains column headers (default: true)
+:param bool $hasHeader: Whether the first row contains column headers (default: true)
 :param string $separator: Column separator character (default: ",")
 :returns: DataFrame
 :raises Polars\\Exception: If file cannot be read or parsed
@@ -44,8 +44,59 @@ Read a DataFrame from a CSV file.
 **Example:**
 
 ```php
-$df = DataFrame::fromCsv('data.csv');
-$df = DataFrame::fromCsv('data.tsv', headerIncluded: true, separator: "\t");
+$df = DataFrame::readCsv('data.csv');
+$df = DataFrame::readCsv('data.tsv', hasHeader: true, separator: "\t");
+```
+
+### readJson
+
+```{php:method} static readJson(string $path): DataFrame
+```
+
+Read a DataFrame from a JSON file.
+
+:param string $path: Path to the JSON file
+:returns: DataFrame
+:raises Polars\\Exception: If file cannot be read or parsed
+
+**Example:**
+
+```php
+$df = DataFrame::readJson('data.json');
+```
+
+### readNdjson
+
+```{php:method} static readNdjson(string $path): DataFrame
+```
+
+Read a DataFrame from a NDJSON (newline-delimited JSON) file.
+
+:param string $path: Path to the NDJSON file
+:returns: DataFrame
+:raises Polars\\Exception: If file cannot be read or parsed
+
+**Example:**
+
+```php
+$df = DataFrame::readNdjson('data.ndjson');
+```
+
+### readParquet
+
+```{php:method} static readParquet(string $path): DataFrame
+```
+
+Read a DataFrame from a Parquet file.
+
+:param string $path: Path to the Parquet file
+:returns: DataFrame
+:raises Polars\\Exception: If file cannot be read or parsed
+
+**Example:**
+
+```php
+$df = DataFrame::readParquet('data.parquet');
 ```
 
 ## Properties
@@ -388,6 +439,54 @@ Write DataFrame to a CSV file.
 ```php
 $df->writeCsv('output.csv');
 $df->writeCsv('output.tsv', includeHeader: true, separator: "\t");
+```
+
+### writeJson
+
+```{php:method} writeJson(string $path): void
+```
+
+Write DataFrame to a JSON file.
+
+:param string $path: Output file path
+:raises Polars\\Exception: If file cannot be written
+
+**Example:**
+
+```php
+$df->writeJson('output.json');
+```
+
+### writeNdjson
+
+```{php:method} writeNdjson(string $path): void
+```
+
+Write DataFrame to a NDJSON (newline-delimited JSON) file.
+
+:param string $path: Output file path
+:raises Polars\\Exception: If file cannot be written
+
+**Example:**
+
+```php
+$df->writeNdjson('output.ndjson');
+```
+
+### writeParquet
+
+```{php:method} writeParquet(string $path): void
+```
+
+Write DataFrame to a Parquet file.
+
+:param string $path: Output file path
+:raises Polars\\Exception: If file cannot be written
+
+**Example:**
+
+```php
+$df->writeParquet('output.parquet');
 ```
 
 ### __toString
