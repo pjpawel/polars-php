@@ -5,7 +5,6 @@ mod data_frame;
 mod data_type;
 mod exception;
 mod expression;
-mod functions;
 mod lazy_frame;
 mod lazy_group_by;
 mod series;
