@@ -2,7 +2,7 @@
 
 A PHP extension bringing the power of [Polars](https://pola.rs/) DataFrames to PHP.
 
-> **Note:** Some features are not yet available.
+> **Note:** Some features are not yet available. Look in GitHub issues for updates.
 
 ## Features
 

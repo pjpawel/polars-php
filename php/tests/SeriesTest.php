@@ -240,6 +240,97 @@ class SeriesTest extends TestCase
         $this->assertEquals(3, $s->nUnique());
     }
 
+    public function testArgMax(): void
+    {
+        $s = new Series('x', [5, 2, 8, 1, 9]);
+        $this->assertEquals(4, $s->argMax());
+    }
+
+    public function testArgMaxEmpty(): void
+    {
+        $s = new Series('x', []);
+        $this->assertNull($s->argMax());
+    }
+
+    public function testArgMin(): void
+    {
+        $s = new Series('x', [5, 2, 8, 1, 9]);
+        $this->assertEquals(3, $s->argMin());
+    }
+
+    public function testArgMinEmpty(): void
+    {
+        $s = new Series('x', []);
+        $this->assertNull($s->argMin());
+    }
+
+    public function testImplode(): void
+    {
+        $s = new Series('x', [1, 2, 3]);
+        $result = $s->implode();
+        $this->assertInstanceOf(Series::class, $result);
+        $this->assertEquals(1, $result->len());
+    }
+
+    public function testMode(): void
+    {
+        $s = new Series('x', [1, 1, 2, 2, 2, 3]);
+        $result = $s->mode();
+        $this->assertInstanceOf(Series::class, $result);
+        $this->assertEquals(1, $result->len());
+        $this->assertEquals(2, $result[0]);
+    }
+
+    public function testQuantile(): void
+    {
+        $s = new Series('x', [1.0, 2.0, 3.0, 4.0, 5.0]);
+        $result = $s->quantile(0.5);
+        $this->assertEqualsWithDelta(3.0, $result, 0.001);
+    }
+
+    public function testQuantileWithMethod(): void
+    {
+        $s = new Series('x', [1.0, 2.0, 3.0, 4.0]);
+        $lower = $s->quantile(0.5, 'lower');
+        $higher = $s->quantile(0.5, 'higher');
+        $this->assertEquals(2.0, $lower);
+        $this->assertEquals(3.0, $higher);
+    }
+
+    public function testNanMax(): void
+    {
+        $s = new Series('x', [1.0, 2.0, NAN, 4.0]);
+        $result = $s->nanMax();
+        $this->assertNan($result);
+
+        $s2 = new Series('x', [1.0, 2.0, 4.0]);
+        $this->assertEquals(4.0, $s2->nanMax());
+    }
+
+    public function testNanMin(): void
+    {
+        $s = new Series('x', [1.0, NAN, 3.0, 4.0]);
+        $result = $s->nanMin();
+        $this->assertNan($result);
+
+        $s2 = new Series('x', [1.0, 2.0, 4.0]);
+        $this->assertEquals(1.0, $s2->nanMin());
+    }
+
+    public function testMaxBy(): void
+    {
+        $values = new Series('values', [10, 20, 30, 40, 50]);
+        $keys = new Series('keys', [3, 1, 5, 2, 4]);
+        $this->assertEquals(30, $values->maxBy($keys));
+    }
+
+    public function testMinBy(): void
+    {
+        $values = new Series('values', [10, 20, 30, 40, 50]);
+        $keys = new Series('keys', [3, 1, 5, 2, 4]);
+        $this->assertEquals(20, $values->minBy($keys));
+    }
+
     // ==================== Boolean Operations Tests ====================
 
     public function testIsNull(): void

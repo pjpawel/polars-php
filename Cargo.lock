@@ -2262,6 +2262,7 @@ version = "0.3.0"
 dependencies = [
  "ext-php-rs",
  "polars",
+ "polars-ops",
 ]
 
 [[package]]
