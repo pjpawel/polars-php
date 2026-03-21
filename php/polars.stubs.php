@@ -9,9 +9,9 @@ namespace Polars {
 
     class DataFrame implements \ArrayAccess {
         /**
-         * @return \Polars\DataType[]
+         * Get schema description as string
          */
-        public $dtypes;
+        public $schema;
 
         /**
          * Get columns names
@@ -20,9 +20,9 @@ namespace Polars {
         public $columns;
 
         /**
-         * Get schema description as string
+         * @return \Polars\DataType[]
          */
-        public $schema;
+        public $dtypes;
 
         /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
@@ -501,6 +501,11 @@ namespace Polars {
          * Get the number of elements (Countable interface)
          */
         public function count(): int {}
+
+        /**
+         * Get flags that are set on the Series
+         */
+        public function getFlags(): array {}
 
         /**
          * Get the number of elements in the Series

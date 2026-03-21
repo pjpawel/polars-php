@@ -55,12 +55,35 @@ Get the shape of the Series as [length].
 
 :returns: int[] - Array with single element [length]
 
+### getFlags
+
+```{php:method} getFlags(): array
+```
+
+Get flags that are set on the Series.
+
+:returns: array<string, bool> - Associative array with flag names as keys and boolean values
+
+The returned flags depend on the Series data type:
+
+- **SORTED_ASC** — `true` if the Series is known to be sorted in ascending order. Present on all Series.
+- **SORTED_DESC** — `true` if the Series is known to be sorted in descending order. Present on all Series.
+- **FAST_EXPLODE** — `true` if the list values can be exploded without additional validity checks. Only present on List-type Series (e.g. after calling `implode()`).
+
 **Example:**
 
 ```php
 $s = new Series('x', [1, 2, 3, 4, 5]);
 $s->getName();   // 'x'
 $s->getShape();  // [5]
+
+$s->getFlags(); // ['SORTED_ASC' => false, 'SORTED_DESC' => false]
+
+$sorted = $s->sort();
+$sorted->getFlags(); // ['SORTED_ASC' => true, 'SORTED_DESC' => false]
+
+$list = $s->implode();
+$list->getFlags(); // ['SORTED_ASC' => false, 'SORTED_DESC' => false, 'FAST_EXPLODE' => true]
 ```
 
 ## Dimensions
