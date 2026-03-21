@@ -304,20 +304,134 @@ Get the product of all values.
 
 :returns: mixed
 
+### argMax
+
+```{php:method} argMax(): ?int
+```
+
+Get the index of the maximum value.
+
+:returns: int|null - Index of the maximum value, or null if the Series is empty
+
+### argMin
+
+```{php:method} argMin(): ?int
+```
+
+Get the index of the minimum value.
+
+:returns: int|null - Index of the minimum value, or null if the Series is empty
+
+### nanMax
+
+```{php:method} nanMax(): float
+```
+
+Get the maximum value, propagating NaN. If any value is NaN, returns NaN.
+
+:returns: float
+:raises Polars\\Exception: If Series is not a float type
+
+### nanMin
+
+```{php:method} nanMin(): float
+```
+
+Get the minimum value, propagating NaN. If any value is NaN, returns NaN.
+
+:returns: float
+:raises Polars\\Exception: If Series is not a float type
+
+### quantile
+
+```{php:method} quantile(float $quantile, string $method = "linear"): mixed
+```
+
+Get the quantile value.
+
+:param float $quantile: Quantile between 0.0 and 1.0
+:param string $method: Interpolation method. One of: `nearest`, `lower`, `higher`, `midpoint`, `linear`, `equiprobable` (default: `linear`)
+:returns: mixed - Quantile value
+:raises Polars\\Exception: If quantile is invalid or method is unknown
+
+### maxBy
+
+```{php:method} maxBy(Series $other): mixed
+```
+
+Get the value from this Series at the index of the maximum of another Series.
+
+:param Series $other: Series to find the argMax of
+:returns: mixed - Value at the index of the max of `$other`
+:raises Polars\\Exception: If `$other` is empty or index is out of bounds
+
+### minBy
+
+```{php:method} minBy(Series $other): mixed
+```
+
+Get the value from this Series at the index of the minimum of another Series.
+
+:param Series $other: Series to find the argMin of
+:returns: mixed - Value at the index of the min of `$other`
+:raises Polars\\Exception: If `$other` is empty or index is out of bounds
+
+### mode
+
+```{php:method} mode(): Series
+```
+
+Get the mode (most common value(s)). Returns a Series containing all values that appear most frequently.
+
+:returns: Series - Series of modal values
+:raises Polars\\Exception: If mode cannot be computed for this type
+
+### implode
+
+```{php:method} implode(): Series
+```
+
+Aggregate all values into a single list. Returns a Series of length 1 containing a list of all values.
+
+:returns: Series - Series of length 1 with a list column
+:raises Polars\\Exception: If implode fails
+
 **Example:**
 
 ```php
 $s = new Series('x', [1, 2, 3, 4, 5]);
-$s->sum();     // 15
-$s->mean();    // 3.0
-$s->median();  // 3.0
-$s->min();     // 1
-$s->max();     // 5
-$s->product(); // 120
+$s->sum();      // 15
+$s->mean();     // 3.0
+$s->median();   // 3.0
+$s->min();      // 1
+$s->max();      // 5
+$s->product();  // 120
+$s->argMax();   // 4
+$s->argMin();   // 0
 
 $s2 = new Series('x', [2, 4, 4, 4, 5, 5, 7, 9]);
 $s2->std(0);      // ~2.0 (population std)
 $s2->variance(0); // ~4.0 (population variance)
+
+$floats = new Series('x', [1.0, 2.0, NAN, 4.0]);
+$floats->nanMax(); // NAN (propagates NaN)
+
+$clean = new Series('x', [1.0, 2.0, 4.0]);
+$clean->nanMax(); // 4.0
+$clean->nanMin(); // 1.0
+$clean->quantile(0.5);           // 2.0 (linear interpolation)
+$clean->quantile(0.5, 'lower');  // 2.0
+$clean->quantile(0.5, 'higher'); // 4.0
+
+$values = new Series('values', [10, 20, 30, 40, 50]);
+$keys   = new Series('keys',   [3, 1, 5, 2, 4]);
+$values->maxBy($keys); // 30 (value at index of max in keys)
+$values->minBy($keys); // 20 (value at index of min in keys)
+
+$s3 = new Series('x', [1, 1, 2, 2, 2, 3]);
+$s3->mode()->toArray(); // [2]
+
+$s->implode()->len(); // 1
 ```
 
 ## Null Handling
