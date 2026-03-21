@@ -1,0 +1,72 @@
+name: Benchmarks
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Install LLVM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-dev libclang-dev clang
+
+      - name: Build extension (release)
+        run: cargo build --release
+
+      - name: Install dependencies
+        run: |
+          cd php
+          composer install --no-interaction
+
+      - name: Run benchmarks
+        run: |
+          cd php
+          vendor/bin/phpbench run --config=benchmarks/phpbench.json --report=default --dump-file=benchmarks/results.xml
+
+      - name: Generate comparison report
+        run: |
+          cd php
+          php benchmarks/compare-report.php benchmarks/results.xml | tee benchmarks/comparison.md
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            php/benchmarks/results.xml
+            php/benchmarks/comparison.md
+          retention-days: 90

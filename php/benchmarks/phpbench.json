@@ -1,0 +1,10 @@
+{
+    "$schema": "https://phpbench.github.io/phpbench/schema/phpbench.schema.json",
+    "runner.bootstrap": "../vendor/autoload.php",
+    "runner.path": ["Polars", "PurePhp"],
+    "runner.php_config": {
+        "extension": "../target/release/libpolars_php.so",
+        "memory_limit": "512M",
+        "opcache.enable_cli": "1"
+    }
+}

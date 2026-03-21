@@ -94,6 +94,33 @@ php -d extension=../target/debug/libpolars_php.so -m | grep polars
 composer test:debug
 ```
 
+## Benchmarks
+
+The project includes a [PHPBench](https://phpbench.readthedocs.io/) benchmark suite comparing polars-php against pure PHP equivalents.
+
+### Running Benchmarks
+
+```bash
+cd php
+composer install
+composer bench           # Run all benchmarks
+composer bench:polars    # Run only Polars benchmarks
+composer bench:purephp   # Run only pure PHP benchmarks
+```
+
+### Benchmark Operations
+
+| Operation          | Polars-PHP                     | Pure PHP Equivalent          |
+|--------------------|--------------------------------|------------------------------|
+| DataFrame Create   | `new DataFrame($data)`         | Array assignment             |
+| CSV Read           | `DataFrame::readCsv($path)`    | `fgetcsv()` loop             |
+| CSV Write          | `$df->writeCsv($path)`         | `fputcsv()` loop             |
+| Aggregation        | `$df->sum()`, `mean()`, etc.   | `array_sum()`, manual calc   |
+| Filter             | `$df->filter(Expr::col()->gt())`| `array_filter()`            |
+| Sort               | `$df->sort('column')`          | `usort()`                    |
+| Join               | `$df->join($df2, ...)`         | Hash-join with `foreach`     |
+| Column Access      | `$df['column']`                | `array_column()`             |
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
