@@ -189,7 +189,7 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [build, generate-stubs]
+    needs: [build, generate-stubs, benchmark]
     if: github.event_name == 'release'
 
     steps:
@@ -220,6 +220,8 @@ jobs:
           files: |
             artifacts/*.zip
             artifacts/php-stubs/stubs.php
+            artifacts/benchmark-results/php/benchmarks/results.xml
+            artifacts/benchmark-results/php/benchmarks/comparison.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
