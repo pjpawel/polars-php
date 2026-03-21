@@ -77,7 +77,7 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
             let col_values: Vec<Option<f64>> = values
                 .iter()
                 .map(|v: &Zval| match v.double() {
-                    Some(v) => Some(v as f64),
+                    Some(v) => Some(v),
                     None => None,
                 })
                 .collect();

@@ -14,15 +14,15 @@ namespace Polars {
         public $dtypes;
 
         /**
-         * Get schema description as string
-         */
-        public $schema;
-
-        /**
          * Get columns names
          * @returns string[]
          */
         public $columns;
+
+        /**
+         * Get schema description as string
+         */
+        public $schema;
 
         /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
@@ -461,9 +461,9 @@ namespace Polars {
 
     class Series implements \ArrayAccess, \Countable {
         /**
-         * Get the name of the Series
+         * Get the data type of the Series
          */
-        public $name;
+        public $dtype;
 
         /**
          * Get the shape of the Series as [length]
@@ -471,9 +471,9 @@ namespace Polars {
         public $shape;
 
         /**
-         * Get the data type of the Series
+         * Get the name of the Series
          */
-        public $dtype;
+        public $name;
 
         /**
          * Check if an index exists
@@ -596,6 +596,52 @@ namespace Polars {
          * Count unique values
          */
         public function nUnique(): int {}
+
+        /**
+         * Get the index of the maximum value
+         */
+        public function argMax(): mixed {}
+
+        /**
+         * Get the index of the minimum value
+         */
+        public function argMin(): mixed {}
+
+        /**
+         * Aggregate all values into a single list
+         */
+        public function implode(): \Polars\Series {}
+
+        /**
+         * Get the mode (most common value(s))
+         */
+        public function mode(): \Polars\Series {}
+
+        /**
+         * Get the quantile value
+         * @param string $method One of: nearest, lower, higher, midpoint, linear, equiprobable
+         */
+        public function quantile(float $quantile, string $method = "linear"): mixed {}
+
+        /**
+         * Get the maximum value, propagating NaN
+         */
+        public function nanMax(): mixed {}
+
+        /**
+         * Get the minimum value, propagating NaN
+         */
+        public function nanMin(): mixed {}
+
+        /**
+         * Get value from this Series at the index of the maximum of another Series
+         */
+        public function maxBy(\Polars\Series $other): mixed {}
+
+        /**
+         * Get value from this Series at the index of the minimum of another Series
+         */
+        public function minBy(\Polars\Series $other): mixed {}
 
         /**
          * Check which values are null

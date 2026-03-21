@@ -6,8 +6,8 @@ use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ZendHashTable, Zval};
 use ext_php_rs::zend::ce;
 use polars::prelude::{
-    ChunkCompareEq, ChunkCompareIneq, FillNullStrategy, IntoSeries, NamedFrom, Series,
-    SortOptions,
+    ArgAgg, ChunkCompareEq, ChunkCompareIneq, FillNullStrategy, IntoSeries, NamedFrom,
+    QuantileMethod, Series, SortOptions,
 };
 
 /// Convert PHP array values to a Series
@@ -328,6 +328,157 @@ impl PhpSeries {
         self.inner
             .n_unique()
             .map_err(|e| PolarsException::new(format!("Cannot count unique values: {}", e)))
+    }
+
+    /// Get the index of the maximum value
+    #[php(name = "argMax")]
+    pub fn arg_max(&self) -> ExtResult<Zval> {
+        let mut zval = Zval::new();
+        if let Some(idx) = self.inner.arg_max() {
+            zval.set_long(idx as i64);
+        }
+        Ok(zval)
+    }
+
+    /// Get the index of the minimum value
+    #[php(name = "argMin")]
+    pub fn arg_min(&self) -> ExtResult<Zval> {
+        let mut zval = Zval::new();
+        if let Some(idx) = self.inner.arg_min() {
+            zval.set_long(idx as i64);
+        }
+        Ok(zval)
+    }
+
+    /// Aggregate all values into a single list
+    pub fn implode(&self) -> ExtResult<Self> {
+        let result = self.inner.implode().map_err(|e| {
+            PolarsException::new(format!("Cannot implode: {}", e))
+        })?;
+        Ok(Self {
+            inner: result.into_series(),
+        })
+    }
+
+    /// Get the mode (most common value(s))
+    pub fn mode(&self) -> ExtResult<Self> {
+        let series = polars_ops::chunked_array::mode::mode(&self.inner)
+            .map_err(|e| PolarsException::new(format!("Cannot compute mode: {}", e)))?;
+        Ok(Self { inner: series })
+    }
+
+    /// Get the quantile value
+    /// @param string $method One of: nearest, lower, higher, midpoint, linear, equiprobable
+    #[php(defaults(method = "linear".to_string()))]
+    pub fn quantile(&self, quantile: f64, method: String) -> ExtResult<Zval> {
+        let qm = match method.as_str() {
+            "nearest" => QuantileMethod::Nearest,
+            "lower" => QuantileMethod::Lower,
+            "higher" => QuantileMethod::Higher,
+            "midpoint" => QuantileMethod::Midpoint,
+            "linear" => QuantileMethod::Linear,
+            "equiprobable" => QuantileMethod::Equiprobable,
+            _ => {
+                return Err(PolarsException::new(format!(
+                    "Unknown quantile method: '{}'. Use: nearest, lower, higher, midpoint, linear, equiprobable",
+                    method
+                )))
+            }
+        };
+        let result = self.inner.quantile_reduce(quantile, qm).map_err(|e| {
+            PolarsException::new(format!("Cannot compute quantile: {}", e))
+        })?;
+        any_value_to_zval(result.value().clone())
+    }
+
+    /// Get the maximum value, propagating NaN
+    #[php(name = "nanMax")]
+    pub fn nan_max(&self) -> ExtResult<Zval> {
+        use polars::prelude::DataType as PlDataType;
+        if !matches!(self.inner.dtype(), PlDataType::Float32 | PlDataType::Float64) {
+            return Err(PolarsException::new(
+                "nanMax only works on float types".to_string(),
+            ));
+        }
+        let has_nan = self
+            .inner
+            .is_nan()
+            .map_err(|e| PolarsException::new(format!("Cannot check NaN: {}", e)))?;
+        if has_nan.any() {
+            let mut zval = Zval::new();
+            zval.set_double(f64::NAN);
+            return Ok(zval);
+        }
+        let result = self.inner.max_reduce().map_err(|e| {
+            PolarsException::new(format!("Cannot compute nanMax: {}", e))
+        })?;
+        any_value_to_zval(result.value().clone())
+    }
+
+    /// Get the minimum value, propagating NaN
+    #[php(name = "nanMin")]
+    pub fn nan_min(&self) -> ExtResult<Zval> {
+        use polars::prelude::DataType as PlDataType;
+        if !matches!(self.inner.dtype(), PlDataType::Float32 | PlDataType::Float64) {
+            return Err(PolarsException::new(
+                "nanMin only works on float types".to_string(),
+            ));
+        }
+        let has_nan = self
+            .inner
+            .is_nan()
+            .map_err(|e| PolarsException::new(format!("Cannot check NaN: {}", e)))?;
+        if has_nan.any() {
+            let mut zval = Zval::new();
+            zval.set_double(f64::NAN);
+            return Ok(zval);
+        }
+        let result = self.inner.min_reduce().map_err(|e| {
+            PolarsException::new(format!("Cannot compute nanMin: {}", e))
+        })?;
+        any_value_to_zval(result.value().clone())
+    }
+
+    /// Get value from this Series at the index of the maximum of another Series
+    #[php(name = "maxBy")]
+    pub fn max_by(&self, other: &PhpSeries) -> ExtResult<Zval> {
+        let idx = other.inner.arg_max().ok_or_else(|| {
+            PolarsException::new(
+                "Cannot find argMax of other Series (empty or all null)".to_string(),
+            )
+        })?;
+        if idx >= self.inner.len() {
+            return Err(PolarsException::new(format!(
+                "Index {} from other Series out of bounds for Series with {} elements",
+                idx,
+                self.inner.len()
+            )));
+        }
+        let value = self.inner.get(idx).map_err(|e| {
+            PolarsException::new(format!("Failed to get value at index {}: {}", idx, e))
+        })?;
+        any_value_to_zval(value)
+    }
+
+    /// Get value from this Series at the index of the minimum of another Series
+    #[php(name = "minBy")]
+    pub fn min_by(&self, other: &PhpSeries) -> ExtResult<Zval> {
+        let idx = other.inner.arg_min().ok_or_else(|| {
+            PolarsException::new(
+                "Cannot find argMin of other Series (empty or all null)".to_string(),
+            )
+        })?;
+        if idx >= self.inner.len() {
+            return Err(PolarsException::new(format!(
+                "Index {} from other Series out of bounds for Series with {} elements",
+                idx,
+                self.inner.len()
+            )));
+        }
+        let value = self.inner.get(idx).map_err(|e| {
+            PolarsException::new(format!("Failed to get value at index {}: {}", idx, e))
+        })?;
+        any_value_to_zval(value)
     }
 
     // ==================== Boolean Operations ====================
