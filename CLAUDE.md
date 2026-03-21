@@ -110,10 +110,62 @@ Every change to the codebase MUST include all three of the following:
 1. **Documentation** — update the relevant `doc/*.md` file(s) with the new/changed API
 2. **Tests** — add or update PHPUnit tests in `php/tests/` covering the change
 3. **Changelog** — add an entry to `CHANGELOG.md` describing the change
+4. **Benchmark** - if necessary add benchmark in php/benchmarks
 
 Do not consider a task complete until all three are updated.
 
 Every task must end building extension and run all tests
+
+## Benchmarks (`php/benchmarks/`)
+
+PHPBench suite comparing polars-php vs pure PHP. All benchmark files live under `php/benchmarks/`.
+
+### Structure
+
+- **`phpbench.json`**: Runner config — loads the release extension, sets 4G memory limit, enables OPcache CLI
+- **`composer.json`**: *(none — uses `php/composer.json` directly)*
+- **`Fixtures/DataGenerator.php`**: Shared data generation at sizes `[100, 1_000, 10_000, 100_000, 1_000_000]`
+- **`Fixtures/TracksPolarsMemory.php`**: Trait to record `$df->estimatedSize()` per benchmark
+- **`Polars/`**: Eight benchmark classes using the polars-php extension
+- **`PurePhp/`**: Eight matching benchmark classes using native PHP
+- **`compare-report.php`**: Custom comparison script — runs phpbench with `--dump-file`, parses the XML output, and prints a side-by-side table
+
+### Benchmark commands (run from `php/`)
+
+```bash
+composer bench           # Run all benchmarks (default report)
+composer bench:polars    # Polars benchmarks only
+composer bench:purephp   # Pure PHP benchmarks only
+composer bench:compare   # Run all + print comparison table
+```
+
+### Comparison report
+
+`compare-report.php` accepts an optional XML dump file argument:
+
+```bash
+# Run benchmarks and show comparison in one step
+php benchmarks/compare-report.php
+
+# Use a previously saved dump file
+php benchmarks/compare-report.php benchmarks/results.xml
+```
+
+Output columns: Benchmark | Polars Time | PHP Time | Speedup | Polars Mem | PHP Mem | Mem Saved
+
+Speedup shows `Nx faster` when Polars wins, `Nx SLOWER` when it doesn't. Memory shows `N% less` or `N% MORE`.
+
+### Data representation
+
+- **Columnar** (`['col' => [values...]]`): DataFrameCreate, Aggregation benchmarks
+- **Row-based** (`[['col' => val, ...], ...]`): Filter, Sort, Join, ColumnAccess, CsvWrite pure PHP benchmarks
+- **CSV file**: CsvRead benchmarks
+
+### Adding a new benchmark
+
+1. Create `Polars/MyOpBench.php` and `PurePhp/MyOpBench.php` using `#[Bench\...]` attributes
+2. Use `DataGenerator::SIZES` for `@ParamProviders` — all sizes including 1M rows
+3. Add the `TracksPolarsMemory` trait to the Polars class if a DataFrame is produced
 
 ## Documentation (`doc/`)
 
