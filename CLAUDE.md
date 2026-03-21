@@ -103,6 +103,18 @@ PHPUnit tests validate the extension. Extension is loaded dynamically via `-d ex
 - **polars**: DataFrame library (with lazy, csv, parquet, json, round_series, product, mode, is_between, timezones features)
 - **polars-plan**: Expression DSL (mode, is_between features provided via polars umbrella crate)
 
+## Change Requirements
+
+Every change to the codebase MUST include all three of the following:
+
+1. **Documentation** — update the relevant `doc/*.md` file(s) with the new/changed API
+2. **Tests** — add or update PHPUnit tests in `php/tests/` covering the change
+3. **Changelog** — add an entry to `CHANGELOG.md` describing the change
+
+Do not consider a task complete until all three are updated.
+
+Every task must end building extension and run all tests
+
 ## Documentation (`doc/`)
 
 Documentation is built using Sphinx with MyST Markdown. Source files:
