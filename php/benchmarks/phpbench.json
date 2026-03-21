@@ -4,7 +4,7 @@
     "runner.path": ["Polars", "PurePhp"],
     "runner.php_config": {
         "extension": "../target/release/libpolars_php.so",
-        "memory_limit": "512M",
+        "memory_limit": "4G",
         "opcache.enable_cli": "1"
     }
 }
