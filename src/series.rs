@@ -5,10 +5,13 @@ use ext_php_rs::flags::DataType as PhpDataType;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ZendHashTable, Zval};
 use ext_php_rs::zend::ce;
+use std::collections::HashMap;
+
 use polars::prelude::{
-    ArgAgg, ChunkCompareEq, ChunkCompareIneq, FillNullStrategy, IntoSeries, NamedFrom,
+    ArgAgg, ChunkCompareEq, ChunkCompareIneq, DataType, FillNullStrategy, IntoSeries, NamedFrom,
     QuantileMethod, Series, SortOptions,
 };
+use polars::series::IsSorted;
 
 /// Convert PHP array values to a Series
 fn zval_vec_to_series(name: &str, values: Vec<Zval>) -> ExtResult<Series> {
@@ -168,6 +171,24 @@ impl PhpSeries {
     #[php(getter)]
     pub fn get_shape(&self) -> Vec<usize> {
         vec![self.inner.len()]
+    }
+
+    /// Get flags that are set on the Series
+    #[php(name = "getFlags")]
+    pub fn get_flags(&self) -> HashMap<String, bool> {
+        let mut out = HashMap::new();
+        let sorted = self.inner.is_sorted_flag();
+        out.insert("SORTED_ASC".to_string(), sorted == IsSorted::Ascending);
+        out.insert("SORTED_DESC".to_string(), sorted == IsSorted::Descending);
+
+        if matches!(self.inner.dtype(), DataType::List(_)) {
+            out.insert(
+                "FAST_EXPLODE".to_string(),
+                self.inner.get_flags().can_fast_explode_list(),
+            );
+        }
+
+        out
     }
 
     /// Get the number of elements in the Series
@@ -394,8 +415,7 @@ impl PhpSeries {
     /// Get the maximum value, propagating NaN
     #[php(name = "nanMax")]
     pub fn nan_max(&self) -> ExtResult<Zval> {
-        use polars::prelude::DataType as PlDataType;
-        if !matches!(self.inner.dtype(), PlDataType::Float32 | PlDataType::Float64) {
+        if !matches!(self.inner.dtype(), DataType::Float32 | DataType::Float64) {
             return Err(PolarsException::new(
                 "nanMax only works on float types".to_string(),
             ));
@@ -418,8 +438,7 @@ impl PhpSeries {
     /// Get the minimum value, propagating NaN
     #[php(name = "nanMin")]
     pub fn nan_min(&self) -> ExtResult<Zval> {
-        use polars::prelude::DataType as PlDataType;
-        if !matches!(self.inner.dtype(), PlDataType::Float32 | PlDataType::Float64) {
+        if !matches!(self.inner.dtype(), DataType::Float32 | DataType::Float64) {
             return Err(PolarsException::new(
                 "nanMin only works on float types".to_string(),
             ));
