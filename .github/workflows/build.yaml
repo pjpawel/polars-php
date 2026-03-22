@@ -220,8 +220,8 @@ jobs:
           files: |
             artifacts/*.zip
             artifacts/php-stubs/stubs.php
-            artifacts/benchmark-results/php/benchmarks/results.xml
-            artifacts/benchmark-results/php/benchmarks/comparison.md
+            artifacts/benchmark-results/results.xml
+            artifacts/benchmark-results/comparison.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
