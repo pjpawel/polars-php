@@ -175,50 +175,20 @@ if (empty($rows)) {
     exit(0);
 }
 
-// Calculate column widths
-$headers = [
-    'name' => 'Benchmark',
-    'polars_time' => 'Polars Time',
-    'php_time' => 'PHP Time',
-    'faster' => 'Speedup',
-    'polars_mem' => 'Polars Mem',
-    'php_mem' => 'PHP Mem',
-    'mem_better' => 'Mem Saved',
-];
-
-$widths = [];
-foreach ($headers as $col => $header) {
-    $widths[$col] = mb_strlen($header);
-}
-foreach ($rows as $row) {
-    foreach ($headers as $col => $_) {
-        $widths[$col] = max($widths[$col], mb_strlen($row[$col]));
-    }
-}
-
-// Print table
-$separator = '+';
-foreach ($widths as $w) {
-    $separator .= str_repeat('-', $w + 2) . '+';
-}
-
-echo $separator . "\n";
-echo '|';
-foreach ($headers as $col => $header) {
-    echo ' ' . str_pad($header, $widths[$col]) . ' |';
-}
-echo "\n" . $separator . "\n";
+// Print markdown table
+echo "| Benchmark | Polars Time | PHP Time | Speedup | Polars Mem | PHP Mem | Mem Saved |\n";
+echo "| :--- | ---: | ---: | ---: | ---: | ---: | ---: |\n";
 
 foreach ($rows as $row) {
-    echo '|';
-    foreach ($headers as $col => $_) {
-        $align = in_array($col, ['polars_time', 'php_time', 'faster', 'polars_mem', 'php_mem', 'mem_better'])
-            ? STR_PAD_LEFT : STR_PAD_RIGHT;
-        echo ' ' . str_pad($row[$col], $widths[$col], ' ', $align) . ' |';
-    }
-    echo "\n";
+    echo '| ' . $row['name']
+        . ' | ' . $row['polars_time']
+        . ' | ' . $row['php_time']
+        . ' | ' . $row['faster']
+        . ' | ' . $row['polars_mem']
+        . ' | ' . $row['php_mem']
+        . ' | ' . $row['mem_better']
+        . " |\n";
 }
-echo $separator . "\n";
 
 // Cleanup temp dump file
 if (!isset($argv[1]) && file_exists($dumpFile)) {
