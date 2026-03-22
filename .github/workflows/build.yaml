@@ -98,11 +98,11 @@ jobs:
         shell: bash
         run: |
           if [ "${{ runner.os }}" == "Windows" ]; then
-            EXT_PATH=$(find target/release -name "*.dll" | head -n 1)
+            EXT_PATH=$(find target/release -maxdepth 1 -name "*.dll" | head -n 1)
           elif [ "${{ runner.os }}" == "macOS" ]; then
-            EXT_PATH=$(find target/release -name "*.dylib" | head -n 1)
+            EXT_PATH=$(find target/release -maxdepth 1 -name "*.dylib" | head -n 1)
           else
-            EXT_PATH=$(find target/release -name "*.so" | head -n 1)
+            EXT_PATH=$(find target/release -maxdepth 1 -name "*.so" | head -n 1)
           fi
           echo "extension_path=$EXT_PATH" >> $GITHUB_OUTPUT
           echo "Found extension: $EXT_PATH"
@@ -286,7 +286,9 @@ jobs:
       - name: Place extension for phpbench
         run: |
           mkdir -p target/release
-          cp extension/libpolars_php-php8.4-ubuntu-latest.so target/release/libpolars_php.so
+          EXT_FILE=$(find extension -type f -name "*.so" | head -n 1)
+          echo "Found extension: $EXT_FILE"
+          cp "$EXT_FILE" target/release/libpolars_php.so
           php -d extension=target/release/libpolars_php.so -m | grep -i polars
 
       - name: Install dependencies
