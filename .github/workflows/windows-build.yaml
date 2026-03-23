@@ -1,0 +1,209 @@
+name: Windows Build (Debug)
+
+on:
+  push:
+    branches: [ feature/32-add-windows-support ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Windows Build - PHP ${{ matrix.php }}
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.3', '8.4', '8.5']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Print runner info
+        shell: pwsh
+        run: |
+          Write-Host "=== Runner Info ==="
+          systeminfo | Select-String "OS", "Total Physical"
+          Get-ComputerInfo | Select-Object WindowsVersion, OsArchitecture, OsBuildNumber
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: none
+          tools: none
+
+      - name: Debug PHP environment
+        shell: bash
+        run: |
+          echo "=== PHP Version ==="
+          php --version
+
+          echo ""
+          echo "=== PHP Info (key vars) ==="
+          php -i | grep -E "^(PHP Version|include_path|extension_dir|PHPRC|PHP_PREFIX|PHP_BINARY|Configuration File)" || true
+
+          echo ""
+          echo "=== PHP constants ==="
+          php -r "echo 'PHP_PREFIX=' . PHP_PREFIX . PHP_EOL;"
+          php -r "echo 'PHP_BINARY=' . PHP_BINARY . PHP_EOL;"
+          php -r "echo 'PHP_EXTENSION_DIR=' . PHP_EXTENSION_DIR . PHP_EOL;"
+
+          echo ""
+          echo "=== PHP include dir ==="
+          PHP_PREFIX=$(php -r 'echo PHP_PREFIX;')
+          echo "PHP_PREFIX=$PHP_PREFIX"
+          ls "$PHP_PREFIX" || echo "Could not list PHP_PREFIX"
+          ls "$PHP_PREFIX/include" 2>/dev/null || echo "No include dir at PHP_PREFIX/include"
+          ls "$PHP_PREFIX/include/php" 2>/dev/null || echo "No include/php dir"
+          find "$PHP_PREFIX" -name "php.h" 2>/dev/null || echo "php.h not found under PHP_PREFIX"
+
+          echo ""
+          echo "=== Searching for PHP headers system-wide ==="
+          find /c/tools -name "php.h" 2>/dev/null | head -5 || echo "Not in /c/tools"
+          find /c/php* -name "php.h" 2>/dev/null | head -5 || echo "Not in /c/php*"
+
+      - name: Setup Rust (nightly)
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          targets: x86_64-pc-windows-msvc
+
+      - name: Debug Rust environment
+        shell: bash
+        run: |
+          echo "=== Rust toolchain ==="
+          rustc --version
+          cargo --version
+          rustup show
+          echo ""
+          echo "=== Installed targets ==="
+          rustup target list --installed
+
+      - name: Cache Cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: windows-php${{ matrix.php }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            windows-php${{ matrix.php }}-cargo-
+
+      - name: Install LLVM
+        shell: pwsh
+        run: |
+          Write-Host "=== Installing LLVM via Chocolatey ==="
+          choco install llvm -y
+          $llvmBin = "C:\Program Files\LLVM\bin"
+          echo "LIBCLANG_PATH=$llvmBin" >> $env:GITHUB_ENV
+          echo "$llvmBin" >> $env:GITHUB_PATH
+
+      - name: Debug LLVM environment
+        shell: bash
+        run: |
+          echo "=== LLVM ==="
+          echo "LIBCLANG_PATH=$LIBCLANG_PATH"
+          clang --version 2>/dev/null || echo "clang not found in PATH"
+          llvm-config --version 2>/dev/null || echo "llvm-config not found"
+          ls "$LIBCLANG_PATH" 2>/dev/null || echo "LIBCLANG_PATH dir not accessible"
+
+      - name: Debug PHP headers for ext-php-rs
+        shell: bash
+        run: |
+          echo "=== env vars ext-php-rs reads ==="
+          echo "PHP_CONFIG=${PHP_CONFIG:-<not set>}"
+          echo "PHP=${PHP:-<not set>}"
+
+          echo ""
+          echo "=== Relevant environment variables ==="
+          env | sort | grep -E "^(PHP|RUST|CARGO|LLVM|CLANG|PATH|LIB|INCLUDE|MSVC|VCTOOLS|WindowsSDK)" || true
+
+      - name: Build extension (verbose)
+        id: build
+        continue-on-error: true
+        shell: pwsh
+        env:
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: |
+          Write-Host "=== Starting cargo build ==="
+          cargo build --release --verbose 2>&1 | Tee-Object -FilePath build.log
+          $exitCode = $LASTEXITCODE
+          Write-Host "=== Build exited with code: $exitCode ==="
+          exit $exitCode
+
+      - name: Debug build result
+        if: always()
+        shell: bash
+        run: |
+          echo "=== Build step outcome: ${{ steps.build.outcome }} ==="
+
+          echo ""
+          echo "=== target/release/ contents ==="
+          ls target/release/ 2>/dev/null || echo "target/release not found"
+
+          echo ""
+          echo "=== DLL files in target/release ==="
+          find target/release -maxdepth 1 -name "*.dll" 2>/dev/null || echo "No DLL found"
+          find target/release -maxdepth 1 -name "*.pdb" 2>/dev/null || echo "No PDB found"
+
+          echo ""
+          echo "=== Cargo.lock first 30 lines ==="
+          head -30 Cargo.lock 2>/dev/null || echo "Cargo.lock not found"
+
+          echo ""
+          echo "=== Last 50 lines of build log ==="
+          tail -50 build.log 2>/dev/null || echo "build.log not found"
+
+      - name: Find built extension
+        if: steps.build.outcome == 'success'
+        id: find-extension
+        shell: bash
+        run: |
+          EXT_PATH=$(find target/release -maxdepth 1 -name "*.dll" | head -n 1)
+          echo "Found DLL: $EXT_PATH"
+          echo "extension_path=$EXT_PATH" >> $GITHUB_OUTPUT
+
+      - name: Test extension loading
+        if: steps.build.outcome == 'success'
+        shell: bash
+        run: |
+          EXT_PATH="${{ steps.find-extension.outputs.extension_path }}"
+          if [ -z "$EXT_PATH" ]; then
+            echo "ERROR: No DLL found, cannot test extension loading"
+            exit 1
+          fi
+
+          echo "=== Testing extension load: $EXT_PATH ==="
+          php -d extension="$EXT_PATH" -m
+          echo "php -m exit code: $?"
+
+          echo ""
+          echo "=== Checking polars in module list ==="
+          php -d extension="$EXT_PATH" -m | grep -i polars || echo "polars not found in loaded modules"
+
+          echo ""
+          echo "=== Quick smoke test ==="
+          php -d extension="$EXT_PATH" -r "echo 'Extension loaded OK' . PHP_EOL;" || echo "Smoke test failed"
+
+      - name: Upload DLL artifact
+        if: steps.build.outcome == 'success' && steps.find-extension.outputs.extension_path != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: polars-php-dll-php${{ matrix.php }}
+          path: ${{ steps.find-extension.outputs.extension_path }}
+          retention-days: 7
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-php${{ matrix.php }}
+          path: build.log
+          if-no-files-found: ignore
+          retention-days: 7
