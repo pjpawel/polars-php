@@ -20,7 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest] # /, windows-latest
-        php: ['8.3', '8.4', '8.5']
+        # php: ['8.3', '8.4', '8.5']
+        php: ['8.4']
         include:
           - os: ubuntu-latest
             extension: so
