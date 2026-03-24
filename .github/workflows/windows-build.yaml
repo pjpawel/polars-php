@@ -15,7 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.3', '8.4', '8.5']
+        # php: ['8.3', '8.4', '8.5']
+        php: ['8.4']
 
     steps:
       - name: Checkout code
@@ -128,8 +129,6 @@ jobs:
         id: build
         continue-on-error: true
         shell: pwsh
-        env:
-          RUSTFLAGS: -C target-feature=+crt-static
         run: |
           Write-Host "=== Starting cargo build ==="
           cargo build --release --verbose 2>&1 | Tee-Object -FilePath build.log
@@ -159,6 +158,30 @@ jobs:
           echo ""
           echo "=== Last 50 lines of build log ==="
           tail -50 build.log 2>/dev/null || echo "build.log not found"
+
+      - name: Dump ext-php-rs generated bindings (data symbols)
+        if: always()
+        shell: bash
+        run: |
+          echo "=== ext-php-rs generated bindings — data symbol declarations ==="
+          find target -name "bindings.rs" -path "*/ext-php-rs-*/out/*" 2>/dev/null | while read f; do
+            echo "--- $f ---"
+            grep -n "zend_ce_exception\|std_object_handlers\|zend_string_init\|zend_ce_type\|zend_ce_traversable\|zend_ce_arrayaccess\|zend_ce_countable" "$f" || echo "(no matches)"
+          done || echo "No bindings.rs found"
+
+      - name: Inspect php8.lib exports
+        if: always()
+        shell: pwsh
+        run: |
+          $libs = Get-ChildItem -Path target -Recurse -Filter "php8.lib" -ErrorAction SilentlyContinue
+          if ($libs.Count -eq 0) {
+            Write-Host "No php8.lib found in target/"
+          } else {
+            foreach ($lib in $libs) {
+              Write-Host "=== Exports from $($lib.FullName) ==="
+              & dumpbin /EXPORTS $lib.FullName 2>$null | Select-String "zend_ce_exception|std_object_handlers|zend_string_init|__imp_"
+            }
+          }
 
       - name: Find built extension
         if: steps.build.outcome == 'success'
