@@ -436,6 +436,26 @@ Exclusive OR (XOR).
 :param mixed $other: Value to XOR with
 :returns: Expr
 
+### and_
+
+```{php:method} and_(mixed $other): Expr
+```
+
+Bitwise AND operation (equivalent to `&` operator).
+
+:param mixed $other: Value to AND with
+:returns: Expr
+
+### or_
+
+```{php:method} or_(mixed $other): Expr
+```
+
+Bitwise OR operation (equivalent to `|` operator).
+
+:param mixed $other: Value to OR with
+:returns: Expr
+
 **Example:**
 
 ```php

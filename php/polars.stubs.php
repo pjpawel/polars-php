@@ -9,12 +9,6 @@ namespace Polars {
 
     class DataFrame implements \ArrayAccess {
         /**
-         * Get columns names
-         * @returns string[]
-         */
-        public $columns;
-
-        /**
          * @return \Polars\DataType[]
          */
         public $dtypes;
@@ -23,6 +17,12 @@ namespace Polars {
          * Get schema description as string
          */
         public $schema;
+
+        /**
+         * Get columns names
+         * @returns string[]
+         */
+        public $columns;
 
         /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
@@ -461,9 +461,9 @@ namespace Polars {
 
     class Series implements \ArrayAccess, \Countable {
         /**
-         * Get the data type of the Series
+         * Get the shape of the Series as [length]
          */
-        public $dtype;
+        public $shape;
 
         /**
          * Get the name of the Series
@@ -471,9 +471,9 @@ namespace Polars {
         public $name;
 
         /**
-         * Get the shape of the Series as [length]
+         * Get the data type of the Series
          */
-        public $shape;
+        public $dtype;
 
         /**
          * Check if an index exists
@@ -919,6 +919,16 @@ namespace Polars {
          * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function xxor(mixed $other): \Polars\Expr {}
+
+        /**
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+         */
+        public function and_(mixed $other): \Polars\Expr {}
+
+        /**
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+         */
+        public function or_(mixed $other): \Polars\Expr {}
 
         public function hasNulls(): \Polars\Expr {}
 
