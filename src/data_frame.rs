@@ -8,10 +8,10 @@ use ext_php_rs::flags::DataType as PhpDataType;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
 use ext_php_rs::zend::ce;
-use polars::lazy::dsl::{all, col, lit, Expr};
+use polars::lazy::dsl::{Expr, all, col, lit};
 use polars::prelude::{
-    Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, IntoSeries,
-    JoinArgs, JoinType, JsonFormat, JsonReader, JsonWriter, OptFlags, ParquetWriter, PlSmallStr,
+    Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, IntoSeries, JoinArgs,
+    JoinType, JsonFormat, JsonReader, JsonWriter, OptFlags, ParquetWriter, PlSmallStr,
     QuantileMethod, Selector, SerReader, SerWriter, SortMultipleOptions, UniqueKeepStrategy,
 };
 use std::collections::HashMap;
@@ -35,11 +35,7 @@ fn parse_array_to_cols_by_keys(data: &ZendHashTable) -> ExtResult<Vec<Column>> {
             }
         };
 
-        let col_vals = arr
-            .values()
-            .into_iter()
-            .map(|zv| zv.shallow_clone())
-            .collect();
+        let col_vals = arr.values().map(|zv| zv.shallow_clone()).collect();
 
         let col = col_vals_to_column(&col_name, col_vals)?;
         columns.push(col);
@@ -64,23 +60,11 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
             Ok(Column::new(name.into(), col_values))
         }
         PhpDataType::Long => {
-            let col_values: Vec<Option<i64>> = values
-                .iter()
-                .map(|v: &Zval| match v.long() {
-                    Some(v) => Some(v as i64),
-                    None => None,
-                })
-                .collect();
+            let col_values: Vec<Option<i64>> = values.iter().map(|v: &Zval| v.long()).collect();
             Ok(Column::new(name.into(), col_values))
         }
         PhpDataType::Double => {
-            let col_values: Vec<Option<f64>> = values
-                .iter()
-                .map(|v: &Zval| match v.double() {
-                    Some(v) => Some(v),
-                    None => None,
-                })
-                .collect();
+            let col_values: Vec<Option<f64>> = values.iter().map(|v: &Zval| v.double()).collect();
             Ok(Column::new(name.into(), col_values))
         }
         PhpDataType::String => {
@@ -110,7 +94,6 @@ pub struct PhpDataFrame {
 #[php_impl]
 #[php(change_method_case = "camelCase")]
 impl PhpDataFrame {
-
     /// Create a new DataFrame from a PHP array
     /// keys are column name
     ///
@@ -162,7 +145,11 @@ impl PhpDataFrame {
     pub fn offset_exists(&self, offset: &Zval) -> bool {
         // Method required by ArrayAccess interface
         if let Some(col_name) = offset.string() {
-            return self.inner.get_column_names().iter().any(|c| c.as_str() == col_name);
+            return self
+                .inner
+                .get_column_names()
+                .iter()
+                .any(|c| c.as_str() == col_name);
         }
         if let Some(idx) = offset.long() {
             let idx = if idx < 0 {
@@ -192,9 +179,8 @@ impl PhpDataFrame {
             let col = self.inner.column(&col_name).map_err(|e| {
                 PolarsException::new(format!("Column '{}' not found: {}", col_name, e))
             })?;
-            let df = DataFrame::new(vec![col.clone()]).map_err(|e| {
-                PolarsException::new(format!("Failed to create DataFrame: {}", e))
-            })?;
+            let df = DataFrame::new(vec![col.clone()])
+                .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
             return Ok(Self { inner: df });
         }
 
@@ -219,10 +205,7 @@ impl PhpDataFrame {
         // Multiple columns by array of names, optionally with row index
         // Supports: $df[['col1', 'col2']] or $df[['col1', 'col2', 0]]
         if let Some(arr) = offset.array() {
-            let col_names: Vec<String> = arr
-                .values()
-                .filter_map(|v| v.string())
-                .collect();
+            let col_names: Vec<String> = arr.values().filter_map(|v| v.string()).collect();
 
             // Look for an integer (row index) in the array
             let row_idx: Option<i64> = arr.values().find_map(|v| v.long());
@@ -238,15 +221,14 @@ impl PhpDataFrame {
                 .map(|name| {
                     self.inner
                         .column(name)
-                        .map(|c| c.clone())
+                        .cloned()
                         .map_err(|e| format!("Column '{}' not found: {}", name, e))
                 })
                 .collect();
 
-            let cols = cols.map_err(|e| PolarsException::new(e))?;
-            let mut df = DataFrame::new(cols).map_err(|e| {
-                PolarsException::new(format!("Failed to create DataFrame: {}", e))
-            })?;
+            let cols = cols.map_err(PolarsException::new)?;
+            let mut df = DataFrame::new(cols)
+                .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
 
             // If row index is provided, slice to that row
             if let Some(idx) = row_idx {
@@ -364,7 +346,7 @@ impl PhpDataFrame {
             Err(e) => {
                 return Err(PolarsException::new(format!(
                     "Cannot execute count operation: {}",
-                    e.to_string()
+                    e
                 )));
             }
         };
@@ -385,7 +367,7 @@ impl PhpDataFrame {
             Err(e) => {
                 return Err(PolarsException::new(format!(
                     "Cannot execute max operation: {}",
-                    e.to_string()
+                    e
                 )));
             }
         };
@@ -412,7 +394,7 @@ impl PhpDataFrame {
             Err(e) => {
                 return Err(PolarsException::new(format!(
                     "Cannot execute min operation: {}",
-                    e.to_string()
+                    e
                 )));
             }
         };
@@ -433,7 +415,7 @@ impl PhpDataFrame {
             Err(e) => {
                 return Err(PolarsException::new(format!(
                     "Cannot execute min operation: {}",
-                    e.to_string()
+                    e
                 )));
             }
         };
@@ -455,7 +437,7 @@ impl PhpDataFrame {
             Err(e) => {
                 return Err(PolarsException::new(format!(
                     "Cannot execute min operation: {}",
-                    e.to_string()
+                    e
                 )));
             }
         };
@@ -516,9 +498,10 @@ impl PhpDataFrame {
     /// Get a single column as a Series
     /// @return \Polars\Series
     pub fn column(&self, name: String) -> ExtResult<PhpSeries> {
-        let col = self.inner.column(&name).map_err(|e| {
-            PolarsException::new(format!("Column '{}' not found: {}", name, e))
-        })?;
+        let col = self
+            .inner
+            .column(&name)
+            .map_err(|e| PolarsException::new(format!("Column '{}' not found: {}", name, e)))?;
         Ok(PhpSeries::from(col.clone().take_materialized_series()))
     }
 
@@ -554,25 +537,25 @@ impl PhpDataFrame {
     /// Read a DataFrame from a CSV file
     #[allow(non_snake_case)]
     #[php(defaults(hasHeader = true, separator = ",".to_string()))]
-    pub fn read_csv(
-        path: String,
-        hasHeader: bool,
-        separator: String,
-    ) -> ExtResult<Self> {
+    pub fn read_csv(path: String, hasHeader: bool, separator: String) -> ExtResult<Self> {
         if separator.len() != 1 {
-            return Err(PolarsException::new("Separator must of length 1".to_string()));
+            return Err(PolarsException::new(
+                "Separator must of length 1".to_string(),
+            ));
         }
         let df = CsvReadOptions::default()
             .with_has_header(hasHeader)
             .with_parse_options(
                 CsvParseOptions::default()
                     .with_try_parse_dates(true)
-                    .with_separator(separator.as_bytes().first().unwrap().to_owned())
+                    .with_separator(separator.as_bytes().first().unwrap().to_owned()),
             )
             .try_into_reader_with_file_path(Some(path.into()))
             .map_err(|e| PolarsException::new(format!("Failed to read CSV: {}", e)))?
             .finish()
-            .map_err(|e| PolarsException::new(format!("Failed to create df from CSV file: {}", e)))?;
+            .map_err(|e| {
+                PolarsException::new(format!("Failed to create df from CSV file: {}", e))
+            })?;
         Ok(Self { inner: df })
     }
 
@@ -617,7 +600,9 @@ impl PhpDataFrame {
         separator: String,
     ) -> ExtResult<()> {
         if separator.len() != 1 {
-            return Err(PolarsException::new("Separator must of length 1".to_string()));
+            return Err(PolarsException::new(
+                "Separator must of length 1".to_string(),
+            ));
         }
 
         let mut file = std::fs::File::create(&path)
@@ -788,9 +773,7 @@ impl PhpDataFrame {
             .median()
             .with_optimizations(OptFlags::EAGER)
             .collect()
-            .map_err(|e| {
-                PolarsException::new(format!("Cannot execute median operation: {}", e))
-            })?;
+            .map_err(|e| PolarsException::new(format!("Cannot execute median operation: {}", e)))?;
         Ok(Self { inner })
     }
 
@@ -1215,7 +1198,10 @@ impl PhpDataFrame {
                 ArrayKey::Long(i) => i.to_string(),
             };
             let dtype_str = value.string().ok_or_else(|| {
-                PolarsException::new(format!("Data type for column '{}' must be a string", col_name))
+                PolarsException::new(format!(
+                    "Data type for column '{}' must be a string",
+                    col_name
+                ))
             })?;
             let target_type = parse_dtype(&dtype_str)?;
             if strict {
@@ -1336,7 +1322,6 @@ impl PhpDataFrame {
 
     /// Get descriptive statistics (count, null_count, mean, std, min, max, median)
     pub fn describe(&self) -> ExtResult<Self> {
-
         let lazy = self.inner.clone().lazy();
 
         // Helper to collect a stat row and cast numeric columns to f64 strings
@@ -1355,24 +1340,35 @@ impl PhpDataFrame {
         let median_df = collect_stat(lazy.clone().median())?;
 
         let stat_names = ["count", "null_count", "mean", "std", "min", "max", "median"];
-        let stat_dfs = [&count_df, &null_count_df, &mean_df, &std_df, &min_df, &max_df, &median_df];
+        let stat_dfs = [
+            &count_df,
+            &null_count_df,
+            &mean_df,
+            &std_df,
+            &min_df,
+            &max_df,
+            &median_df,
+        ];
 
         // Build result: first column is "statistic", then each original column cast to string
         let mut result_columns: Vec<Column> = Vec::new();
         result_columns.push(Column::new(
             "statistic".into(),
-            stat_names.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+            stat_names
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>(),
         ));
 
         for col_name in self.inner.get_column_names() {
             let mut values: Vec<String> = Vec::new();
             for stat_df in &stat_dfs {
-                let col_item = stat_df.column(col_name.as_str()).map_err(|e| {
-                    PolarsException::new(format!("Describe failed: {}", e))
-                })?;
-                let val = col_item.get(0).map_err(|e| {
-                    PolarsException::new(format!("Describe failed: {}", e))
-                })?;
+                let col_item = stat_df
+                    .column(col_name.as_str())
+                    .map_err(|e| PolarsException::new(format!("Describe failed: {}", e)))?;
+                let val = col_item
+                    .get(0)
+                    .map_err(|e| PolarsException::new(format!("Describe failed: {}", e)))?;
                 values.push(format!("{}", val));
             }
             result_columns.push(Column::new(col_name.clone(), values));
@@ -1475,8 +1471,14 @@ impl PhpDataFrame {
     }
 }
 
-impl Into<PhpDataFrame> for DataFrame {
-    fn into(self) -> PhpDataFrame {
-        PhpDataFrame { inner: self }
+// impl Into<PhpDataFrame> for DataFrame {
+//     fn into(self) -> PhpDataFrame {
+//         PhpDataFrame { inner: self }
+//     }
+// }
+
+impl From<DataFrame> for PhpDataFrame {
+    fn from(df: DataFrame) -> Self {
+        PhpDataFrame { inner: df }
     }
 }

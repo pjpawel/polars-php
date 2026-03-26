@@ -1,11 +1,11 @@
-use std::ops::{Add, Div, Neg};
-use ext_php_rs::{php_class, php_enum, php_impl};
+use crate::exception::{ExtResult, PolarsException};
 use ext_php_rs::flags::DataType;
 use ext_php_rs::types::{ZendObject, Zval};
+use ext_php_rs::{php_class, php_enum, php_impl};
+use polars::lazy::dsl::{Expr, all, col, cols, lit};
 use polars::prelude::ClosedInterval;
-use polars::lazy::dsl::{all, col, cols, Expr, lit};
 use polars::prelude::{Literal, NULL};
-use crate::exception::{ExtResult, PolarsException};
+use std::ops::{Add, Div, Neg};
 
 #[php_class]
 #[php(name = "Polars\\Expr")]
@@ -14,7 +14,6 @@ pub struct PolarsExpr(Expr);
 
 #[php_impl]
 impl PolarsExpr {
-
     /// Constructor creates LiteralValue from int, float, string, boolean, or null. Passing other values will cause throwing exception
     /// @throws Polars\Exception
     pub fn __construct(value: &Zval) -> ExtResult<Self> {
@@ -72,22 +71,22 @@ impl PolarsExpr {
         self.0.clone().min().into()
     }
 
-    #[php(name="nUnique")]
+    #[php(name = "nUnique")]
     pub fn n_unique(&self) -> Self {
         self.0.clone().n_unique().into()
     }
 
-    #[php(name="nanMax")]
+    #[php(name = "nanMax")]
     pub fn nan_max(&self) -> Self {
         self.0.clone().nan_max().into()
     }
 
-    #[php(name="nanMin")]
+    #[php(name = "nanMin")]
     pub fn nan_min(&self) -> Self {
         self.0.clone().nan_min().into()
     }
 
-    #[php(name="nullCount")]
+    #[php(name = "nullCount")]
     pub fn null_count(&self) -> Self {
         self.0.clone().null_count().into()
     }
@@ -101,7 +100,7 @@ impl PolarsExpr {
     // }
 
     #[php(defaults(ddof = 1))]
-    pub fn std(&self, ddof: u8) ->Self {
+    pub fn std(&self, ddof: u8) -> Self {
         self.0.clone().std(ddof).into()
     }
 
@@ -123,7 +122,7 @@ impl PolarsExpr {
     }
 
     /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
-    #[php(name="eqMissing")]
+    #[php(name = "eqMissing")]
     pub fn eq_missing(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().eq_missing(other_expr).into())
@@ -160,7 +159,7 @@ impl PolarsExpr {
     }
 
     /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
-    #[php(name="neqMissing")]
+    #[php(name = "neqMissing")]
     pub fn neq_missing(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().neq_missing(other_expr).into())
@@ -173,7 +172,7 @@ impl PolarsExpr {
     }
 
     /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
-    #[php(name="floorDiv")]
+    #[php(name = "floorDiv")]
     pub fn floor_div(&self, other: &Zval) -> ExtResult<Self> {
         let other_expr = zval_to_expr(other)?;
         Ok(self.0.clone().floor_div(other_expr).into())
@@ -221,7 +220,7 @@ impl PolarsExpr {
 
     // BOOLEAN //
 
-    #[php(name="hasNulls")]
+    #[php(name = "hasNulls")]
     pub fn has_nulls(&self) -> Self {
         self.0.clone().null_count().gt(0).into()
     }
@@ -240,7 +239,10 @@ impl PolarsExpr {
     /// Take every nth value
     #[php(name = "gatherEvery", defaults(offset = 0))]
     pub fn gather_every(&self, n: i64, offset: i64) -> Self {
-        self.0.clone().gather_every(n as usize, offset as usize).into()
+        self.0
+            .clone()
+            .gather_every(n as usize, offset as usize)
+            .into()
     }
 
     /// Cast to a data type
@@ -250,47 +252,45 @@ impl PolarsExpr {
     }
 
     #[allow(non_snake_case)]
-    #[php(name="isBetween")]
+    #[php(name = "isBetween")]
     pub fn is_between(
         &self,
         lowerBound: &Zval,
         upperBound: &Zval,
-        closed: PolarsClosedInterval
+        closed: PolarsClosedInterval,
     ) -> ExtResult<Self> {
         let lower = zval_to_expr(lowerBound)?;
         let upper = zval_to_expr(upperBound)?;
-        Ok(self.0.clone()
+        Ok(self
+            .0
+            .clone()
             .is_between(lower, upper, closed.into())
             .into())
     }
-
-
 }
 
 /// Methods that are hidden from PHP stubs
 impl PolarsExpr {
-
     pub fn get_expr(&self) -> &Expr {
         &self.0
     }
-
 }
 
-impl Into<PolarsExpr> for Expr {
-    fn into(self) -> PolarsExpr {
-        PolarsExpr(self)
+impl From<Expr> for PolarsExpr {
+    fn from(expr: Expr) -> Self {
+        PolarsExpr(expr)
     }
 }
 
-impl Into<Expr> for PolarsExpr {
-    fn into(self) -> Expr {
-        self.0
+impl From<PolarsExpr> for Expr {
+    fn from(polars_expr: PolarsExpr) -> Expr {
+        polars_expr.0
     }
 }
 
-impl Into<Expr> for &PolarsExpr {
-    fn into(self) -> Expr {
-        self.clone().0
+impl From<&PolarsExpr> for Expr {
+    fn from(polars_expr: &PolarsExpr) -> Expr {
+        polars_expr.0.clone()
     }
 }
 
@@ -315,9 +315,9 @@ pub enum PolarsClosedInterval {
     None,
 }
 
-impl Into<ClosedInterval> for PolarsClosedInterval {
-    fn into(self) -> ClosedInterval {
-        match self {
+impl From<PolarsClosedInterval> for ClosedInterval {
+    fn from(polars_closed_interval: PolarsClosedInterval) -> Self {
+        match polars_closed_interval {
             PolarsClosedInterval::Both => ClosedInterval::Both,
             PolarsClosedInterval::Left => ClosedInterval::Left,
             PolarsClosedInterval::Right => ClosedInterval::Right,
@@ -352,7 +352,7 @@ impl Into<ClosedInterval> for PolarsClosedInterval {
 pub fn zval_to_expr(value: &Zval) -> ExtResult<Expr> {
     Ok(
         match value.get_type() {
-            DataType::Long => lit(value.long().unwrap() as i64),
+            DataType::Long => lit(value.long().unwrap()),
             DataType::Double => lit(value.double().unwrap()),
             DataType::String => lit(value.str().unwrap()),
             DataType::Bool | DataType::False | DataType::True => lit(value.bool().unwrap()),

@@ -29,17 +29,11 @@ fn zval_vec_to_series(name: &str, values: Vec<Zval>) -> ExtResult<Series> {
             Ok(Series::new(name.into(), col_values))
         }
         PhpDataType::Long => {
-            let col_values: Vec<Option<i64>> = values
-                .iter()
-                .map(|v| v.long().map(|x| x as i64))
-                .collect();
+            let col_values: Vec<Option<i64>> = values.iter().map(|v| v.long()).collect();
             Ok(Series::new(name.into(), col_values))
         }
         PhpDataType::Double => {
-            let col_values: Vec<Option<f64>> = values
-                .iter()
-                .map(|v| v.double().map(|x| x as f64))
-                .collect();
+            let col_values: Vec<Option<f64>> = values.iter().map(|v| v.double()).collect();
             Ok(Series::new(name.into(), col_values))
         }
         PhpDataType::String => {
@@ -271,9 +265,10 @@ impl PhpSeries {
 
     /// Get the sum of all values
     pub fn sum(&self) -> ExtResult<Zval> {
-        let result = self.inner.sum_reduce().map_err(|e| {
-            PolarsException::new(format!("Cannot compute sum: {}", e))
-        })?;
+        let result = self
+            .inner
+            .sum_reduce()
+            .map_err(|e| PolarsException::new(format!("Cannot compute sum: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
@@ -293,17 +288,19 @@ impl PhpSeries {
 
     /// Get the minimum value
     pub fn min(&self) -> ExtResult<Zval> {
-        let result = self.inner.min_reduce().map_err(|e| {
-            PolarsException::new(format!("Cannot compute min: {}", e))
-        })?;
+        let result = self
+            .inner
+            .min_reduce()
+            .map_err(|e| PolarsException::new(format!("Cannot compute min: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
     /// Get the maximum value
     pub fn max(&self) -> ExtResult<Zval> {
-        let result = self.inner.max_reduce().map_err(|e| {
-            PolarsException::new(format!("Cannot compute max: {}", e))
-        })?;
+        let result = self
+            .inner
+            .max_reduce()
+            .map_err(|e| PolarsException::new(format!("Cannot compute max: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
@@ -318,16 +315,17 @@ impl PhpSeries {
     /// Get the variance
     #[php(name = "variance", defaults(ddof = 1))]
     pub fn variance(&self, ddof: u8) -> ExtResult<f64> {
-        self.inner
-            .var(ddof)
-            .ok_or_else(|| PolarsException::new("Cannot compute variance for this type".to_string()))
+        self.inner.var(ddof).ok_or_else(|| {
+            PolarsException::new("Cannot compute variance for this type".to_string())
+        })
     }
 
     /// Get the product of all values
     pub fn product(&self) -> ExtResult<Zval> {
-        let result = self.inner.product().map_err(|e| {
-            PolarsException::new(format!("Cannot compute product: {}", e))
-        })?;
+        let result = self
+            .inner
+            .product()
+            .map_err(|e| PolarsException::new(format!("Cannot compute product: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
@@ -373,9 +371,10 @@ impl PhpSeries {
 
     /// Aggregate all values into a single list
     pub fn implode(&self) -> ExtResult<Self> {
-        let result = self.inner.implode().map_err(|e| {
-            PolarsException::new(format!("Cannot implode: {}", e))
-        })?;
+        let result = self
+            .inner
+            .implode()
+            .map_err(|e| PolarsException::new(format!("Cannot implode: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -403,12 +402,13 @@ impl PhpSeries {
                 return Err(PolarsException::new(format!(
                     "Unknown quantile method: '{}'. Use: nearest, lower, higher, midpoint, linear, equiprobable",
                     method
-                )))
+                )));
             }
         };
-        let result = self.inner.quantile_reduce(quantile, qm).map_err(|e| {
-            PolarsException::new(format!("Cannot compute quantile: {}", e))
-        })?;
+        let result = self
+            .inner
+            .quantile_reduce(quantile, qm)
+            .map_err(|e| PolarsException::new(format!("Cannot compute quantile: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
@@ -429,9 +429,10 @@ impl PhpSeries {
             zval.set_double(f64::NAN);
             return Ok(zval);
         }
-        let result = self.inner.max_reduce().map_err(|e| {
-            PolarsException::new(format!("Cannot compute nanMax: {}", e))
-        })?;
+        let result = self
+            .inner
+            .max_reduce()
+            .map_err(|e| PolarsException::new(format!("Cannot compute nanMax: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
@@ -452,9 +453,10 @@ impl PhpSeries {
             zval.set_double(f64::NAN);
             return Ok(zval);
         }
-        let result = self.inner.min_reduce().map_err(|e| {
-            PolarsException::new(format!("Cannot compute nanMin: {}", e))
-        })?;
+        let result = self
+            .inner
+            .min_reduce()
+            .map_err(|e| PolarsException::new(format!("Cannot compute nanMin: {}", e)))?;
         any_value_to_zval(result.value().clone())
     }
 
@@ -521,9 +523,10 @@ impl PhpSeries {
     /// Check which values are NaN
     #[php(name = "isNan")]
     pub fn is_nan(&self) -> ExtResult<Self> {
-        let result = self.inner.is_nan().map_err(|e| {
-            PolarsException::new(format!("Cannot check NaN: {}", e))
-        })?;
+        let result = self
+            .inner
+            .is_nan()
+            .map_err(|e| PolarsException::new(format!("Cannot check NaN: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -532,9 +535,10 @@ impl PhpSeries {
     /// Check which values are not NaN
     #[php(name = "isNotNan")]
     pub fn is_not_nan(&self) -> ExtResult<Self> {
-        let result = self.inner.is_not_nan().map_err(|e| {
-            PolarsException::new(format!("Cannot check not NaN: {}", e))
-        })?;
+        let result = self
+            .inner
+            .is_not_nan()
+            .map_err(|e| PolarsException::new(format!("Cannot check not NaN: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -562,9 +566,10 @@ impl PhpSeries {
     /// @param int|float|string|bool|null $other
     pub fn eq(&self, other: &Zval) -> ExtResult<Self> {
         let other_series = zval_to_scalar_series(&self.inner, other)?;
-        let result = self.inner.equal(&other_series).map_err(|e| {
-            PolarsException::new(format!("Comparison failed: {}", e))
-        })?;
+        let result = self
+            .inner
+            .equal(&other_series)
+            .map_err(|e| PolarsException::new(format!("Comparison failed: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -574,9 +579,10 @@ impl PhpSeries {
     /// @param int|float|string|bool|null $other
     pub fn ne(&self, other: &Zval) -> ExtResult<Self> {
         let other_series = zval_to_scalar_series(&self.inner, other)?;
-        let result = self.inner.not_equal(&other_series).map_err(|e| {
-            PolarsException::new(format!("Comparison failed: {}", e))
-        })?;
+        let result = self
+            .inner
+            .not_equal(&other_series)
+            .map_err(|e| PolarsException::new(format!("Comparison failed: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -586,9 +592,10 @@ impl PhpSeries {
     /// @param int|float|string|bool|null $other
     pub fn lt(&self, other: &Zval) -> ExtResult<Self> {
         let other_series = zval_to_scalar_series(&self.inner, other)?;
-        let result = self.inner.lt(&other_series).map_err(|e| {
-            PolarsException::new(format!("Comparison failed: {}", e))
-        })?;
+        let result = self
+            .inner
+            .lt(&other_series)
+            .map_err(|e| PolarsException::new(format!("Comparison failed: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -598,9 +605,10 @@ impl PhpSeries {
     /// @param int|float|string|bool|null $other
     pub fn le(&self, other: &Zval) -> ExtResult<Self> {
         let other_series = zval_to_scalar_series(&self.inner, other)?;
-        let result = self.inner.lt_eq(&other_series).map_err(|e| {
-            PolarsException::new(format!("Comparison failed: {}", e))
-        })?;
+        let result = self
+            .inner
+            .lt_eq(&other_series)
+            .map_err(|e| PolarsException::new(format!("Comparison failed: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -610,9 +618,10 @@ impl PhpSeries {
     /// @param int|float|string|bool|null $other
     pub fn gt(&self, other: &Zval) -> ExtResult<Self> {
         let other_series = zval_to_scalar_series(&self.inner, other)?;
-        let result = self.inner.gt(&other_series).map_err(|e| {
-            PolarsException::new(format!("Comparison failed: {}", e))
-        })?;
+        let result = self
+            .inner
+            .gt(&other_series)
+            .map_err(|e| PolarsException::new(format!("Comparison failed: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -622,9 +631,10 @@ impl PhpSeries {
     /// @param int|float|string|bool|null $other
     pub fn ge(&self, other: &Zval) -> ExtResult<Self> {
         let other_series = zval_to_scalar_series(&self.inner, other)?;
-        let result = self.inner.gt_eq(&other_series).map_err(|e| {
-            PolarsException::new(format!("Comparison failed: {}", e))
-        })?;
+        let result = self
+            .inner
+            .gt_eq(&other_series)
+            .map_err(|e| PolarsException::new(format!("Comparison failed: {}", e)))?;
         Ok(Self {
             inner: result.into_series(),
         })
@@ -639,9 +649,10 @@ impl PhpSeries {
         let options = SortOptions::default()
             .with_order_descending(descending)
             .with_nulls_last(nullsLast);
-        let sorted = self.inner.sort(options).map_err(|e| {
-            PolarsException::new(format!("Sort failed: {}", e))
-        })?;
+        let sorted = self
+            .inner
+            .sort(options)
+            .map_err(|e| PolarsException::new(format!("Sort failed: {}", e)))?;
         Ok(Self { inner: sorted })
     }
 
@@ -654,9 +665,10 @@ impl PhpSeries {
 
     /// Get unique values
     pub fn unique(&self) -> ExtResult<Self> {
-        let unique = self.inner.unique().map_err(|e| {
-            PolarsException::new(format!("Failed to get unique values: {}", e))
-        })?;
+        let unique = self
+            .inner
+            .unique()
+            .map_err(|e| PolarsException::new(format!("Failed to get unique values: {}", e)))?;
         Ok(Self { inner: unique })
     }
 
@@ -746,9 +758,10 @@ impl PhpSeries {
     /// @param string $dtype One of: 'int8', 'int16', 'int32', 'int64', 'uint8', 'uint16', 'uint32', 'uint64', 'float32', 'float64', 'bool', 'string'
     pub fn cast(&self, dtype: String) -> ExtResult<Self> {
         let target_type = crate::common::parse_dtype(&dtype)?;
-        let casted = self.inner.cast(&target_type).map_err(|e| {
-            PolarsException::new(format!("Cast to {} failed: {}", dtype, e))
-        })?;
+        let casted = self
+            .inner
+            .cast(&target_type)
+            .map_err(|e| PolarsException::new(format!("Cast to {} failed: {}", dtype, e)))?;
         Ok(Self { inner: casted })
     }
 
@@ -768,7 +781,7 @@ fn zval_to_scalar_series(reference: &Series, value: &Zval) -> ExtResult<Series> 
 
     match value.get_type() {
         PhpDataType::Long => {
-            let v = value.long().unwrap() as i64;
+            let v = value.long().unwrap();
             Ok(Series::new(name.clone(), vec![v; len]))
         }
         PhpDataType::Double => {

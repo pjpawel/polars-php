@@ -9,7 +9,6 @@ use polars::prelude::PolarsError;
 pub struct PolarsException(String);
 
 impl PolarsException {
-
     pub fn new(msg: String) -> Self {
         Self(msg)
     }
@@ -17,19 +16,17 @@ impl PolarsException {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
-
 }
 
-
-impl Into<PolarsException> for PolarsError {
-    fn into(self) -> PolarsException {
-        PolarsException(format!("Exception during processing: {}", self.to_string()))
+impl From<PolarsError> for PolarsException {
+    fn from(err: PolarsError) -> Self {
+        PolarsException(format!("Exception during processing: {}", err))
     }
 }
 
-impl Into<PhpException> for PolarsException {
-    fn into(self) -> PhpException {
-        PhpException::default(self.0)
+impl From<PolarsException> for PhpException {
+    fn from(polars_exception: PolarsException) -> PhpException {
+        PhpException::default(polars_exception.0)
     }
 }
 
