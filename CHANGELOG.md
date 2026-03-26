@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+- [Feature] Add `Expr::and_()` and `Expr::or_()` bitwise AND/OR operators
+
 ## 0.4.0
 - [Feature] Add missing aggregation methods for Series class: `argMax()`, `argMin()`, `nanMax()`, `nanMin()`, `maxBy()`, `minBy()`, `mode()`, `implode()`
 - [Feature] Add `Series::getFlags()` method to retrieve sorting and optimization flags

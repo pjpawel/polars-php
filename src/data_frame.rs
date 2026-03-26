@@ -52,7 +52,7 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
         }
     };
     match first_value.get_type() {
-        PhpDataType::Bool => {
+        PhpDataType::Bool | PhpDataType::True | PhpDataType::False => {
             let col_values: Vec<Option<bool>> = values
                 .iter()
                 .map(|v: &Zval| v.bool()) // returns Option<bool>
