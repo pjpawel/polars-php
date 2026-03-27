@@ -456,6 +456,52 @@ class ExprTest extends TestCase
         $this->assertInstanceOf(Expr::class, $expr->xxor(true));
     }
 
+    public function testAnd(): void
+    {
+        $expr = Expr::col('abc');
+        $expr2 = Expr::col('def');
+        $this->assertInstanceOf(Expr::class, $expr->and_($expr2));
+    }
+
+    public function testAndWithBool(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->and_(true));
+    }
+
+    public function testOr(): void
+    {
+        $expr = Expr::col('abc');
+        $expr2 = Expr::col('def');
+        $this->assertInstanceOf(Expr::class, $expr->or_($expr2));
+    }
+
+    public function testOrWithBool(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->or_(true));
+    }
+
+    public function testAndWithDataFrame(): void
+    {
+        $df = new DataFrame([
+            'a' => [true, false, true],
+            'b' => [true, true, false],
+        ]);
+        $result = $df->select([Expr::col('a')->and_(Expr::col('b'))->alias('result')]);
+        $this->assertEquals([true, false, false], $result->column('result')->toArray());
+    }
+
+    public function testOrWithDataFrame(): void
+    {
+        $df = new DataFrame([
+            'a' => [true, false, true],
+            'b' => [true, true, false],
+        ]);
+        $result = $df->select([Expr::col('a')->or_(Expr::col('b'))->alias('result')]);
+        $this->assertEquals([true, true, true], $result->column('result')->toArray());
+    }
+
     // Utility methods
 
     public function testHasNulls(): void

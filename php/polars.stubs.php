@@ -25,6 +25,12 @@ namespace Polars {
         public $dtypes;
 
         /**
+         * Get columns names
+         * @returns string[]
+         */
+        public $columns;
+
+        /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
          * @return \Polars\LazyFrame
          */
@@ -616,14 +622,14 @@ namespace Polars {
         public $shape;
 
         /**
-         * Get the data type of the Series
-         */
-        public $dtype;
-
-        /**
          * Get the name of the Series
          */
         public $name;
+
+        /**
+         * Get the data type of the Series
+         */
+        public $dtype;
 
         /**
          * Check if an index exists
@@ -1069,6 +1075,16 @@ namespace Polars {
          * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
          */
         public function xxor(mixed $other): \Polars\Expr {}
+
+        /**
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+         */
+        public function and_(mixed $other): \Polars\Expr {}
+
+        /**
+         * @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+         */
+        public function or_(mixed $other): \Polars\Expr {}
 
         public function hasNulls(): \Polars\Expr {}
 

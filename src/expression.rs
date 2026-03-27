@@ -218,6 +218,20 @@ impl PolarsExpr {
         Ok(self.0.clone().xor(other_expr).into())
     }
 
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+    #[php(name = "and_")]
+    pub fn and_(&self, other: &Zval) -> ExtResult<Self> {
+        let other_expr = zval_to_expr(other)?;
+        Ok(self.0.clone().and(other_expr).into())
+    }
+
+    /// @param int|float|string|bool|null|\Polars\Expr $other Accepts numeric, string, bool, null or PolarsExpr object
+    #[php(name = "or_")]
+    pub fn or_(&self, other: &Zval) -> ExtResult<Self> {
+        let other_expr = zval_to_expr(other)?;
+        Ok(self.0.clone().or(other_expr).into())
+    }
+
     // BOOLEAN //
 
     #[php(name = "hasNulls")]
