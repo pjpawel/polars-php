@@ -26,8 +26,6 @@ class DataFrameMethodsTest extends TestCase
         ]);
     }
 
-    // Phase 1: Core Manipulation
-
     public function testSort(): void
     {
         $df = $this->createDf();
@@ -93,8 +91,6 @@ class DataFrameMethodsTest extends TestCase
         $this->assertEquals(2, $result->height());
     }
 
-    // Phase 2: Aggregations
-
     public function testSum(): void
     {
         $df = new DataFrame(['x' => [1, 2, 3]]);
@@ -139,8 +135,6 @@ class DataFrameMethodsTest extends TestCase
         $result = $df->product();
         $this->assertEquals(24, $result->item());
     }
-
-    // Phase 3: Row/Column Manipulation
 
     public function testUnique(): void
     {
@@ -252,8 +246,6 @@ class DataFrameMethodsTest extends TestCase
         $this->assertEquals(1, $row['row_num']);
     }
 
-    // Phase 4: Export/Row Access
-
     public function testToArray(): void
     {
         $df = new DataFrame([
@@ -289,8 +281,6 @@ class DataFrameMethodsTest extends TestCase
         $rows = $df->rows();
         $this->assertCount(5, $rows);
     }
-
-    // Phase 5: Direct DataFrame Methods
 
     public function testVstack(): void
     {
@@ -378,8 +368,6 @@ class DataFrameMethodsTest extends TestCase
         $this->assertEquals(5, $mask->len());
     }
 
-    // Phase 6: Advanced Lazy Delegates
-
     public function testShift(): void
     {
         $df = new DataFrame(['x' => [1, 2, 3, 4, 5]]);
@@ -419,8 +407,6 @@ class DataFrameMethodsTest extends TestCase
         $this->assertContains('value', $result->columns);
     }
 
-    // Phase 7: Descriptive Methods
-
     public function testSchema(): void
     {
         $df = $this->createDf();
@@ -456,12 +442,10 @@ class DataFrameMethodsTest extends TestCase
         $this->assertGreaterThan(1, $result->height());
     }
 
-    // Phase 8: Remaining Methods
-
     public function testSample(): void
     {
         $df = $this->createDf();
-        $result = $df->sample(3, seed: 42);
+        $result = $df->sample(3, false, true, null, 42);
         $this->assertEquals(3, $result->height());
     }
 
@@ -502,5 +486,374 @@ class DataFrameMethodsTest extends TestCase
         $this->assertEquals(2, $result->height());
         $row = $result->row(0);
         $this->assertEquals(25, $row['age']); // Lowest age first
+    }
+
+    public function testJoinLeftOnRightOn(): void
+    {
+        $df1 = new DataFrame(['id' => [1, 2, 3], 'val' => ['a', 'b', 'c']]);
+        $df2 = new DataFrame(['key' => [1, 2, 4], 'data' => ['x', 'y', 'z']]);
+        $result = $df1->join($df2, [], 'inner',
+            leftOn: [Expr::col('id')],
+            rightOn: [Expr::col('key')]
+        );
+        $this->assertEquals(2, $result->height());
+    }
+
+    public function testJoinWithSuffix(): void
+    {
+        $df1 = new DataFrame(['id' => [1, 2], 'val' => ['a', 'b']]);
+        $df2 = new DataFrame(['id' => [1, 2], 'val' => ['x', 'y']]);
+        $result = $df1->join($df2, [Expr::col('id')], 'inner', null, null, '_other');
+        $this->assertContains('val_other', $result->columns);
+    }
+
+    public function testJoinWithValidation(): void
+    {
+        $df1 = new DataFrame(['id' => [1, 2, 3], 'val' => ['a', 'b', 'c']]);
+        $df2 = new DataFrame(['id' => [1, 2, 3], 'data' => ['x', 'y', 'z']]);
+        $result = $df1->join($df2, [Expr::col('id')], 'inner', null, null, null, '1:1');
+        $this->assertEquals(3, $result->height());
+    }
+
+    public function testJoinWithCoalesce(): void
+    {
+        $df1 = new DataFrame(['id' => [1, 2, 3], 'val' => ['a', 'b', 'c']]);
+        $df2 = new DataFrame(['id' => [1, 2, 3], 'data' => ['x', 'y', 'z']]);
+        $result = $df1->join($df2, [Expr::col('id')], 'inner', null, null, null, null, true);
+        $this->assertEquals(3, $result->height());
+    }
+
+    public function testSampleWithFraction(): void
+    {
+        $df = $this->createDf();
+        $result = $df->sample(fraction: 0.5, seed: 42);
+        $this->assertLessThanOrEqual(5, $result->height());
+        $this->assertGreaterThan(0, $result->height());
+    }
+
+    public function testSortMultiColumn(): void
+    {
+        $df = new DataFrame([
+            'a' => [1, 1, 2, 2],
+            'b' => [4, 3, 2, 1],
+        ]);
+        $result = $df->sort(['a', 'b']);
+        $this->assertEquals(3, $result->row(0)['b']);
+        $this->assertEquals(4, $result->row(1)['b']);
+    }
+
+    public function testSortMaintainOrder(): void
+    {
+        $df = $this->createDf();
+        $result = $df->sort('age', maintainOrder: true);
+        $this->assertEquals(5, $result->height());
+        $this->assertEquals(25, $result->row(0)['age']);
+    }
+
+    public function testTransposeWithColumnNames(): void
+    {
+        $df = new DataFrame([
+            'a' => [1, 2],
+            'b' => [3, 4],
+        ]);
+        $result = $df->transpose(columnNames: ['row1', 'row2']);
+        $this->assertContains('row1', $result->columns);
+        $this->assertContains('row2', $result->columns);
+    }
+
+    public function testUnpivotWithCustomNames(): void
+    {
+        $df = new DataFrame([
+            'id' => [1, 2],
+            'a' => [10, 20],
+            'b' => [30, 40],
+        ]);
+        $result = $df->unpivot(['a', 'b'], ['id'], variableName: 'col_name', valueName: 'col_value');
+        $this->assertContains('col_name', $result->columns);
+        $this->assertContains('col_value', $result->columns);
+    }
+
+    public function testToSeries(): void
+    {
+        $df = new DataFrame(['a' => [1, 2, 3]]);
+        $series = $df->toSeries();
+        $this->assertInstanceOf(Series::class, $series);
+        $this->assertEquals('a', $series->name);
+        $this->assertEquals(3, $series->len());
+    }
+
+    public function testToSeriesMultiColumnThrows(): void
+    {
+        $df = new DataFrame(['a' => [1], 'b' => [2]]);
+        $this->expectException(\Exception::class);
+        $df->toSeries();
+    }
+
+    public function testMelt(): void
+    {
+        $df = new DataFrame([
+            'id' => [1, 2],
+            'a' => [10, 20],
+            'b' => [30, 40],
+        ]);
+        $result = $df->melt(['a', 'b'], ['id']);
+        $this->assertEquals(4, $result->height());
+        $this->assertContains('variable', $result->columns);
+        $this->assertContains('value', $result->columns);
+    }
+
+    public function testDropInPlace(): void
+    {
+        $df = new DataFrame(['a' => [1, 2, 3], 'b' => [4, 5, 6]]);
+        $series = $df->dropInPlace('a');
+        $this->assertInstanceOf(Series::class, $series);
+        $this->assertEquals('a', $series->name);
+        $this->assertEquals(1, $df->width());
+        $this->assertEquals(['b'], $df->columns);
+    }
+
+    public function testReplaceColumn(): void
+    {
+        $df = new DataFrame(['a' => [1, 2, 3], 'b' => [4, 5, 6]]);
+        $newSeries = new Series('a', [10, 20, 30]);
+        $df->replaceColumn(0, $newSeries);
+        $row = $df->row(0);
+        $this->assertEquals(10, $row['a']);
+    }
+
+    public function testInsertColumn(): void
+    {
+        $df = new DataFrame(['a' => [1, 2, 3], 'c' => [7, 8, 9]]);
+        $newSeries = new Series('b', [4, 5, 6]);
+        $df->insertColumn(1, $newSeries);
+        $this->assertEquals(3, $df->width());
+        $this->assertEquals(['a', 'b', 'c'], $df->columns);
+    }
+
+    public function testExtend(): void
+    {
+        $df1 = new DataFrame(['a' => [1, 2], 'b' => [3, 4]]);
+        $df2 = new DataFrame(['a' => [5, 6], 'b' => [7, 8]]);
+        $df1->extend($df2);
+        $this->assertEquals(4, $df1->height());
+        $this->assertEquals(5, $df1->row(2)['a']);
+    }
+
+    public function testSelectSeq(): void
+    {
+        $df = $this->createDf();
+        $result = $df->selectSeq([Expr::col('name'), Expr::col('age')]);
+        $this->assertEquals(2, $result->width());
+        $this->assertEquals(['name', 'age'], $result->columns);
+    }
+
+    public function testWithColumnsSeq(): void
+    {
+        $df = $this->createDf();
+        $result = $df->withColumnsSeq([Expr::col('age')->mul(2)->alias('double_age')]);
+        $this->assertContains('double_age', $result->columns);
+    }
+
+    public function testWithRowCount(): void
+    {
+        $df = $this->createDf();
+        $result = $df->withRowCount();
+        $this->assertContains('row_nr', $result->columns);
+        $this->assertEquals(0, $result->row(0)['row_nr']);
+    }
+
+    public function testSetSorted(): void
+    {
+        $df = new DataFrame(['a' => [1, 2, 3, 4, 5]]);
+        $df->setSorted('a');
+        // setSorted modifies the column's sorted flag; verify no error
+        $this->assertEquals(5, $df->height());
+    }
+
+    public function testDropNans(): void
+    {
+        $df = new DataFrame([
+            'a' => [1.0, NAN, 3.0],
+            'b' => [4.0, 5.0, NAN],
+        ]);
+        $result = $df->dropNans();
+        $this->assertEquals(1, $result->height());
+    }
+
+    public function testDropNansSubset(): void
+    {
+        $df = new DataFrame([
+            'a' => [1.0, NAN, 3.0],
+            'b' => [4.0, 5.0, NAN],
+        ]);
+        $result = $df->dropNans(['a']);
+        $this->assertEquals(2, $result->height());
+    }
+
+    public function testRemove(): void
+    {
+        $df = $this->createDf();
+        $result = $df->remove(0);
+        $this->assertEquals(4, $result->height());
+        $this->assertEquals('Bob', $result->row(0)['name']);
+    }
+
+    public function testRemoveNegativeIndex(): void
+    {
+        $df = $this->createDf();
+        $result = $df->remove(-1);
+        $this->assertEquals(4, $result->height());
+        $this->assertEquals('Diana', $result->row(-1)['name']);
+    }
+
+    public function testJoinWhere(): void
+    {
+        $df1 = new DataFrame(['a' => [1, 2, 3], 'val1' => ['x', 'y', 'z']]);
+        $df2 = new DataFrame(['b' => [2, 3, 4], 'val2' => ['p', 'q', 'r']]);
+        $result = $df1->joinWhere($df2, [Expr::col('a')->le(Expr::col('b'))]);
+        $this->assertGreaterThan(0, $result->height());
+    }
+
+    public function testToDummies(): void
+    {
+        $df = new DataFrame(['color' => ['red', 'blue', 'red', 'green']]);
+        $result = $df->toDummies();
+        $this->assertGreaterThanOrEqual(3, $result->width());
+        $this->assertEquals(4, $result->height());
+    }
+
+    public function testToDummiesWithColumns(): void
+    {
+        $df = new DataFrame([
+            'color' => ['red', 'blue'],
+            'size' => ['S', 'L'],
+        ]);
+        $result = $df->toDummies(columns: ['color']);
+        $this->assertContains('size', $result->columns);
+    }
+
+    public function testPartitionBy(): void
+    {
+        $df = new DataFrame([
+            'group' => ['a', 'a', 'b', 'b'],
+            'val' => [1, 2, 3, 4],
+        ]);
+        $partitions = $df->partitionBy(['group']);
+        $this->assertCount(2, $partitions);
+        foreach ($partitions as $part) {
+            $this->assertInstanceOf(DataFrame::class, $part);
+            $this->assertEquals(2, $part->height());
+        }
+    }
+
+    public function testInterpolate(): void
+    {
+        $df = new DataFrame([
+            'a' => [1.0, null, 3.0, null, 5.0],
+        ]);
+        $result = $df->interpolate();
+        $this->assertEquals(5, $result->height());
+        $this->assertEquals(2.0, $result->row(1)['a']);
+        $this->assertEquals(4.0, $result->row(3)['a']);
+    }
+
+    public function testMergeSorted(): void
+    {
+        $df1 = new DataFrame(['a' => [1, 3, 5], 'b' => ['x', 'y', 'z']]);
+        $df2 = new DataFrame(['a' => [2, 4, 6], 'b' => ['p', 'q', 'r']]);
+        $result = $df1->mergeSorted($df2, 'a');
+        $this->assertEquals(6, $result->height());
+        $this->assertEquals(1, $result->row(0)['a']);
+        $this->assertEquals(2, $result->row(1)['a']);
+    }
+
+    public function testPivot(): void
+    {
+        $df = new DataFrame([
+            'name' => ['Alice', 'Bob', 'Alice', 'Bob'],
+            'subject' => ['math', 'math', 'science', 'science'],
+            'score' => [90, 80, 85, 75],
+        ]);
+        $result = $df->pivot(['subject'], ['name'], ['score'], 'first');
+        $this->assertContains('math', $result->columns);
+        $this->assertContains('science', $result->columns);
+        $this->assertEquals(2, $result->height());
+    }
+
+    public function testPivotNoAgg(): void
+    {
+        $df = new DataFrame([
+            'name' => ['Alice', 'Bob'],
+            'subject' => ['math', 'science'],
+            'score' => [90, 80],
+        ]);
+        $result = $df->pivot(['subject'], ['name'], ['score']);
+        $this->assertEquals(2, $result->height());
+    }
+
+    public function testPivotSum(): void
+    {
+        $df = new DataFrame([
+            'name' => ['Alice', 'Alice', 'Bob', 'Bob'],
+            'subject' => ['math', 'math', 'science', 'science'],
+            'score' => [90, 10, 85, 15],
+        ]);
+        $result = $df->pivot(['subject'], ['name'], ['score'], 'sum');
+        $this->assertEquals(2, $result->height());
+    }
+
+    public function testUnnest(): void
+    {
+        // unnest requires struct columns; test basic invocation with non-struct throws
+        $df = new DataFrame([
+            'name' => ['Alice', 'Bob'],
+            'age' => [25, 30],
+        ]);
+        $this->expectException(\Exception::class);
+        $df->unnest(['name']);
+    }
+
+    public function testJoinAsof(): void
+    {
+        $df1 = new DataFrame([
+            'time' => [1, 5, 10],
+            'val' => ['a', 'b', 'c'],
+        ]);
+        $df2 = new DataFrame([
+            'time' => [3, 7, 12],
+            'data' => ['x', 'y', 'z'],
+        ]);
+        $result = $df1->joinAsof($df2, 'time');
+        $this->assertEquals(3, $result->height());
+    }
+
+    public function testJoinAsofForward(): void
+    {
+        $df1 = new DataFrame([
+            'time' => [1, 5, 10],
+            'val' => ['a', 'b', 'c'],
+        ]);
+        $df2 = new DataFrame([
+            'time' => [3, 7, 12],
+            'data' => ['x', 'y', 'z'],
+        ]);
+        $result = $df1->joinAsof($df2, 'time', 'forward');
+        $this->assertEquals(3, $result->height());
+    }
+
+    public function testSql(): void
+    {
+        $df = $this->createDf();
+        $result = $df->sql("SELECT name, age FROM self WHERE age > 28");
+        $this->assertEquals(3, $result->height());
+        $this->assertEquals(['name', 'age'], $result->columns);
+    }
+
+    public function testSqlAggregation(): void
+    {
+        $df = $this->createDf();
+        $result = $df->sql("SELECT COUNT(*) as cnt FROM self");
+        $this->assertEquals(1, $result->height());
+        $this->assertEquals(5, $result->row(0)['cnt']);
     }
 }
