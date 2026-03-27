@@ -2258,7 +2258,7 @@ dependencies = [
 
 [[package]]
 name = "polars-php"
-version = "0.4.1"
+version = "0.5.0"
 dependencies = [
  "either",
  "ext-php-rs",

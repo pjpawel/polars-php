@@ -9,12 +9,6 @@ namespace Polars {
 
     class DataFrame implements \ArrayAccess {
         /**
-         * Get columns names
-         * @returns string[]
-         */
-        public $columns;
-
-        /**
          * Get schema description as string
          */
         public $schema;
@@ -29,6 +23,11 @@ namespace Polars {
          * @returns string[]
          */
         public $columns;
+
+        /**
+         * @return \Polars\DataType[]
+         */
+        public $dtypes;
 
         /**
          * Convert this DataFrame to a LazyFrame for lazy evaluation
@@ -617,9 +616,9 @@ namespace Polars {
 
     class Series implements \ArrayAccess, \Countable {
         /**
-         * Get the shape of the Series as [length]
+         * Get the data type of the Series
          */
-        public $shape;
+        public $dtype;
 
         /**
          * Get the name of the Series
@@ -627,9 +626,9 @@ namespace Polars {
         public $name;
 
         /**
-         * Get the data type of the Series
+         * Get the shape of the Series as [length]
          */
-        public $dtype;
+        public $shape;
 
         /**
          * Check if an index exists
