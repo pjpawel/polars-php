@@ -14,6 +14,11 @@ namespace Polars {
         public $schema;
 
         /**
+         * @return \Polars\DataType[]
+         */
+        public $dtypes;
+
+        /**
          * Get columns names
          * @returns string[]
          */
@@ -190,9 +195,14 @@ namespace Polars {
         public function writeParquet(string $path): void {}
 
         /**
-         * Sort DataFrame by a column
+         * Sort DataFrame by one or more columns
+         * @param string|string[] $by Column name or array of column names to sort by
+         * @param bool $descending Sort order (applies to all columns)
+         * @param bool $nullsLast Put null values last
+         * @param bool $maintainOrder Maintain order of equal elements (stable sort)
+         * @param bool $multithreaded Use multithreaded sorting
          */
-        public function sort(string $column, bool $descending = false, bool $nullsLast = true): \Polars\DataFrame {}
+        public function sort(mixed $by, bool $descending = false, bool $nullsLast = true, bool $maintainOrder = false, bool $multithreaded = true): \Polars\DataFrame {}
 
         /**
          * Drop specified columns
@@ -298,10 +308,15 @@ namespace Polars {
         /**
          * Join with another DataFrame
          * @param \Polars\DataFrame $other The right DataFrame
-         * @param \Polars\Expr[] $on Join columns (used for both left and right)
+         * @param \Polars\Expr[] $on Join columns (used for both left and right when leftOn/rightOn not given)
          * @param string $how Join type: 'inner', 'left', 'right', 'full', 'cross'
+         * @param \Polars\Expr[]|null $leftOn Left join columns (overrides $on for the left side)
+         * @param \Polars\Expr[]|null $rightOn Right join columns (overrides $on for the right side)
+         * @param string|null $suffix Suffix for duplicate column names (default: '_right')
+         * @param string|null $validate Join validation: 'm:m', 'm:1', '1:m', '1:1'
+         * @param bool|null $coalesce Coalesce join columns
          */
-        public function join(\Polars\DataFrame $other, array $on, string $how = "inner"): \Polars\DataFrame {}
+        public function join(\Polars\DataFrame $other, array $on, string $how = "inner", ?array $leftOn = null, ?array $rightOn = null, ?string $suffix = null, ?string $validate = null, ?bool $coalesce = null): \Polars\DataFrame {}
 
         /**
          * Add a row index column
@@ -399,8 +414,10 @@ namespace Polars {
          * Unpivot a DataFrame from wide to long format
          * @param string[] $on Columns to use as values
          * @param string[] $index Columns to use as identifier
+         * @param string|null $variableName Custom name for the variable column (default: 'variable')
+         * @param string|null $valueName Custom name for the value column (default: 'value')
          */
-        public function unpivot(array $on, array $index): \Polars\DataFrame {}
+        public function unpivot(array $on, array $index, ?string $variableName = null, ?string $valueName = null): \Polars\DataFrame {}
 
         /**
          * Explode list columns into rows
@@ -424,14 +441,22 @@ namespace Polars {
         public function describe(): \Polars\DataFrame {}
 
         /**
-         * Randomly sample n rows
+         * Randomly sample rows by count or fraction
+         * @param int $n Number of rows to sample (ignored if $fraction is set)
+         * @param bool $withReplacement Allow sampling with replacement
+         * @param bool $shuffle Shuffle the sampled rows
+         * @param float|null $fraction Fraction of rows to sample (0.0 to 1.0), overrides $n
+         * @param int|null $seed Random seed for reproducibility
          */
-        public function sample(int $n, bool $withReplacement = false, bool $shuffle = true, ?int $seed = null): \Polars\DataFrame {}
+        public function sample(int $n = 0, bool $withReplacement = false, bool $shuffle = true, ?float $fraction = null, ?int $seed = null): \Polars\DataFrame {}
 
         /**
          * Transpose the DataFrame
+         * @param bool $includeHeader Include column names as first column
+         * @param string $headerName Name for the header column
+         * @param string[]|null $columnNames Custom names for the transposed columns
          */
-        public function transpose(bool $includeHeader = false, string $headerName = "column"): \Polars\DataFrame {}
+        public function transpose(bool $includeHeader = false, string $headerName = "column", ?array $columnNames = null): \Polars\DataFrame {}
 
         /**
          * Get the top k rows by a column
@@ -442,6 +467,136 @@ namespace Polars {
          * Get the bottom k rows by a column
          */
         public function bottomK(int $k, string $by): \Polars\DataFrame {}
+
+        /**
+         * Convert a single-column DataFrame to a Series
+         */
+        public function toSeries(): \Polars\Series {}
+
+        /**
+         * Unpivot (alias for unpivot, deprecated name)
+         */
+        public function melt(array $on, array $index, ?string $variableName = null, ?string $valueName = null): \Polars\DataFrame {}
+
+        /**
+         * Remove a column and return it as a Series
+         */
+        public function dropInPlace(string $name): \Polars\Series {}
+
+        /**
+         * Replace a column at a given index
+         */
+        public function replaceColumn(int $index, \Polars\Series $series): void {}
+
+        /**
+         * Insert a column at a given index
+         */
+        public function insertColumn(int $index, \Polars\Series $series): void {}
+
+        /**
+         * Extend this DataFrame with rows from another DataFrame (in-place)
+         */
+        public function extend(\Polars\DataFrame $other): void {}
+
+        /**
+         * Select columns sequentially (no parallel execution)
+         */
+        public function selectSeq(array $expressions): \Polars\DataFrame {}
+
+        /**
+         * Add or overwrite columns sequentially (no parallel execution)
+         */
+        public function withColumnsSeq(array $expressions): \Polars\DataFrame {}
+
+        /**
+         * Add a row count column (deprecated alias for withRowIndex)
+         */
+        public function withRowCount(string $name = "row_nr", int $offset = 0): \Polars\DataFrame {}
+
+        /**
+         * Set the sorted flag on a column
+         */
+        public function setSorted(string $column, bool $descending = false): void {}
+
+        /**
+         * Drop rows with NaN values
+         * @param string[]|null $subset Column names to check
+         */
+        public function dropNans(?array $subset = null): \Polars\DataFrame {}
+
+        /**
+         * Remove a row at the given index
+         */
+        public function remove(int $index): \Polars\DataFrame {}
+
+        /**
+         * Join with another DataFrame using arbitrary predicates
+         * @param \Polars\DataFrame $other The right DataFrame
+         * @param \Polars\Expr[] $predicates Join predicates
+         */
+        public function joinWhere(\Polars\DataFrame $other, array $predicates): \Polars\DataFrame {}
+
+        /**
+         * Convert columns to one-hot encoded (dummy) variables
+         * @param string[]|null $columns Columns to encode (null = all)
+         * @param string $separator Separator between column name and value
+         * @param bool $dropFirst Drop the first category to avoid multicollinearity
+         */
+        public function toDummies(?array $columns = null, string $separator = "_", bool $dropFirst = false): \Polars\DataFrame {}
+
+        /**
+         * Split DataFrame into multiple DataFrames based on unique values in given columns
+         * @param string[] $by Column names to partition by
+         * @param bool $maintainOrder Maintain the order of the original DataFrame
+         * @param bool $includeKey Include the partition key columns in each partition
+         */
+        public function partitionBy(array $by, bool $maintainOrder = true, bool $includeKey = true): array {}
+
+        /**
+         * Interpolate null values using linear interpolation
+         */
+        public function interpolate(): \Polars\DataFrame {}
+
+        /**
+         * Merge two sorted DataFrames by a key column
+         * @param \Polars\DataFrame $other The other sorted DataFrame
+         * @param string $key The column to merge on (must be sorted in both DataFrames)
+         */
+        public function mergeSorted(\Polars\DataFrame $other, string $key): \Polars\DataFrame {}
+
+        /**
+         * Pivot a DataFrame from long to wide format
+         * @param string[] $on Column(s) to use for the pivot
+         * @param string[]|null $index Column(s) to use as row index
+         * @param string[]|null $values Column(s) to aggregate
+         * @param string|null $aggregateFunction Aggregation function: 'first', 'last', 'sum', 'mean', 'median', 'min', 'max', 'count', 'len'
+         * @param bool $sortColumns Sort the resulting pivot columns
+         */
+        public function pivot(array $on, ?array $index = null, ?array $values = null, ?string $aggregateFunction = null, bool $sortColumns = false): \Polars\DataFrame {}
+
+        /**
+         * Unnest struct columns into separate columns
+         * @param string[] $columns Names of struct columns to unnest
+         */
+        public function unnest(array $columns): \Polars\DataFrame {}
+
+        /**
+         * Perform an asof join with another DataFrame
+         * @param \Polars\DataFrame $other The right DataFrame
+         * @param string $on Column to join on (must be sorted)
+         * @param string|null $leftBy Group by column for left DataFrame
+         * @param string|null $rightBy Group by column for right DataFrame
+         * @param string|null $tolerance Tolerance for the asof join (time duration string e.g. "5m")
+         * @param string $strategy Join strategy: 'backward', 'forward', 'nearest'
+         */
+        public function joinAsof(\Polars\DataFrame $other, string $on, ?string $strategy = null, ?string $leftBy = null, ?string $rightBy = null, ?string $tolerance = null): \Polars\DataFrame {}
+
+        /**
+         * Execute a SQL query against this DataFrame
+         * The DataFrame is registered as table named "self"
+         * @param string $query SQL query string
+         */
+        public function sql(string $query): \Polars\DataFrame {}
 
         /**
          * Create a new DataFrame from a PHP array

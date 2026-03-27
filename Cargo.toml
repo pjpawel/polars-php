@@ -7,9 +7,10 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
+either = "1"
 ext-php-rs = "0.15.6"
-polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones", "random", "pivot", "propagate_nans"] }
-polars-ops = { version = "0.52.0", features = ["mode"] }
+polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones", "random", "pivot", "propagate_nans", "partition_by", "interpolate", "merge_sorted", "dtype-struct", "asof_join", "sql", "iejoin", "semi_anti_join"] }
+polars-ops = { version = "0.52.0", features = ["mode", "to_dummies"] }
 
 [profile.release]
 opt-level = 3

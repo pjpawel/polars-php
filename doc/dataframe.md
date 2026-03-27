@@ -443,14 +443,16 @@ $result = $df->select([Expr::col('a')->add(Expr::col('b'))]);
 
 ### sort
 
-```{php:method} sort(string $column, bool $descending = false, bool $nullsLast = true): DataFrame
+```{php:method} sort(string|array $by, bool $descending = false, bool $nullsLast = true, bool $maintainOrder = false, bool $multithreaded = true): DataFrame
 ```
 
-Sort DataFrame by a column.
+Sort DataFrame by one or more columns.
 
-:param string $column: Column name to sort by
+:param string|array $by: Column name or array of column names to sort by
 :param bool $descending: Sort in descending order (default: false)
 :param bool $nullsLast: Place nulls last (default: true)
+:param bool $maintainOrder: Maintain order of equal elements - stable sort (default: false)
+:param bool $multithreaded: Use multithreaded sorting (default: true)
 :returns: DataFrame
 
 **Example:**
@@ -458,6 +460,7 @@ Sort DataFrame by a column.
 ```php
 $df->sort('age');
 $df->sort('age', descending: true);
+$df->sort(['city', 'age'], maintainOrder: true);
 ```
 
 ### drop
@@ -618,20 +621,29 @@ Limit to n rows (alias for head).
 
 ### join
 
-```{php:method} join(DataFrame $other, array $on, string $how = "inner"): DataFrame
+```{php:method} join(DataFrame $other, array $on, string $how = "inner", ?array $leftOn = null, ?array $rightOn = null, ?string $suffix = null, ?string $validate = null, ?bool $coalesce = null): DataFrame
 ```
 
 Join with another DataFrame.
 
 :param DataFrame $other: The right DataFrame
-:param array $on: Array of Expr objects for join columns
+:param array $on: Array of Expr objects for join columns (used for both sides when leftOn/rightOn not given)
 :param string $how: Join type - 'inner', 'left', 'right', 'full', 'cross' (default: 'inner')
+:param array|null $leftOn: Left join columns (overrides $on for left side)
+:param array|null $rightOn: Right join columns (overrides $on for right side)
+:param string|null $suffix: Suffix for duplicate column names (default: '_right')
+:param string|null $validate: Join validation - 'm:m', 'm:1', '1:m', '1:1'
+:param bool|null $coalesce: Whether to coalesce join columns
 :returns: DataFrame
 
 **Example:**
 
 ```php
 $result = $df1->join($df2, [Expr::col('id')], how: 'left');
+$result = $df1->join($df2, [], 'inner',
+    leftOn: [Expr::col('id')],
+    rightOn: [Expr::col('key')]
+);
 ```
 
 ### withRowIndex
@@ -825,13 +837,15 @@ $df->cast(['age' => 'float64', 'score' => 'int32']);
 
 ### unpivot
 
-```{php:method} unpivot(array $on, array $index): DataFrame
+```{php:method} unpivot(array $on, array $index, ?string $variableName = null, ?string $valueName = null): DataFrame
 ```
 
 Unpivot a DataFrame from wide to long format.
 
 :param array $on: Column names to use as values
 :param array $index: Column names to use as identifiers
+:param string|null $variableName: Custom name for the variable column (default: 'variable')
+:param string|null $valueName: Custom name for the value column (default: 'value')
 :returns: DataFrame
 
 ### explode
@@ -842,6 +856,272 @@ Unpivot a DataFrame from wide to long format.
 Explode list columns into rows.
 
 :param array $columns: Column names to explode
+:returns: DataFrame
+
+### melt
+
+```{php:method} melt(array $on, array $index, ?string $variableName = null, ?string $valueName = null): DataFrame
+```
+
+Unpivot (alias for unpivot, deprecated name).
+
+:param array $on: Column names to use as values
+:param array $index: Column names to use as identifiers
+:param string|null $variableName: Custom name for the variable column
+:param string|null $valueName: Custom name for the value column
+:returns: DataFrame
+
+### interpolate
+
+```{php:method} interpolate(): DataFrame
+```
+
+Interpolate null values using linear interpolation.
+
+:returns: DataFrame
+
+## Column Mutation
+
+### dropInPlace
+
+```{php:method} dropInPlace(string $name): Series
+```
+
+Remove a column and return it as a Series. Modifies the DataFrame in place.
+
+:param string $name: Column name to remove
+:returns: Series - The removed column
+:raises Polars\\Exception: If column not found
+
+### replaceColumn
+
+```{php:method} replaceColumn(int $index, Series $series): void
+```
+
+Replace a column at a given index. Modifies the DataFrame in place.
+
+:param int $index: Column index to replace
+:param Series $series: New column data
+:raises Polars\\Exception: If index out of bounds or shape mismatch
+
+### insertColumn
+
+```{php:method} insertColumn(int $index, Series $series): void
+```
+
+Insert a column at a given index. Modifies the DataFrame in place.
+
+:param int $index: Position to insert at
+:param Series $series: Column to insert
+:raises Polars\\Exception: If column name already exists
+
+### extend
+
+```{php:method} extend(DataFrame $other): void
+```
+
+Extend this DataFrame with rows from another DataFrame. Modifies the DataFrame in place.
+
+:param DataFrame $other: DataFrame with matching schema to append
+:raises Polars\\Exception: If schemas don't match
+
+### setSorted
+
+```{php:method} setSorted(string $column, bool $descending = false): void
+```
+
+Set the sorted flag on a column. Modifies the DataFrame in place.
+
+:param string $column: Column name
+:param bool $descending: Whether the column is sorted descending (default: false)
+
+## Sequential Operations
+
+### selectSeq
+
+```{php:method} selectSeq(array $expressions): DataFrame
+```
+
+Select columns sequentially (no parallel execution). Same as select but without parallelism.
+
+:param array $expressions: Array of Expr objects
+:returns: DataFrame
+
+### withColumnsSeq
+
+```{php:method} withColumnsSeq(array $expressions): DataFrame
+```
+
+Add or modify columns sequentially (no parallel execution). Same as withColumns but without parallelism.
+
+:param array $expressions: Array of Expr objects
+:returns: DataFrame
+
+## Conversion
+
+### toSeries
+
+```{php:method} toSeries(): Series
+```
+
+Convert a single-column DataFrame to a Series.
+
+:returns: Series
+:raises Polars\\Exception: If DataFrame has more than one column
+
+### toDummies
+
+```{php:method} toDummies(?array $columns = null, string $separator = "_", bool $dropFirst = false): DataFrame
+```
+
+Convert columns to one-hot encoded (dummy) variables.
+
+:param array|null $columns: Columns to encode (null = all columns)
+:param string $separator: Separator between column name and value (default: "_")
+:param bool $dropFirst: Drop the first category to avoid multicollinearity (default: false)
+:returns: DataFrame
+
+**Example:**
+
+```php
+$df = new DataFrame(['color' => ['red', 'blue', 'red']]);
+$dummies = $df->toDummies();
+```
+
+## Partitioning
+
+### partitionBy
+
+```{php:method} partitionBy(array $by, bool $maintainOrder = true, bool $includeKey = true): array
+```
+
+Split DataFrame into multiple DataFrames based on unique values in given columns.
+
+:param array $by: Column names to partition by
+:param bool $maintainOrder: Maintain the order of the original DataFrame (default: true)
+:param bool $includeKey: Include the partition key columns in each partition (default: true)
+:returns: array - Array of DataFrame objects
+
+### remove
+
+```{php:method} remove(int $index): DataFrame
+```
+
+Remove a row at the given index. Supports negative indexing.
+
+:param int $index: Row index to remove
+:returns: DataFrame
+:raises Polars\\Exception: If index out of bounds
+
+## Pivot
+
+### pivot
+
+```{php:method} pivot(array $on, ?array $index = null, ?array $values = null, ?string $aggregateFunction = null, bool $sortColumns = false): DataFrame
+```
+
+Pivot a DataFrame from long to wide format.
+
+:param array $on: Column(s) to use for the pivot
+:param array|null $index: Column(s) to use as row index
+:param array|null $values: Column(s) to aggregate
+:param string|null $aggregateFunction: Aggregation function - 'first', 'last', 'sum', 'mean', 'median', 'min', 'max', 'count', 'len'
+:param bool $sortColumns: Sort the resulting pivot columns (default: false)
+:returns: DataFrame
+
+**Example:**
+
+```php
+$result = $df->pivot(['subject'], ['name'], ['score'], 'first');
+```
+
+## Merge
+
+### mergeSorted
+
+```{php:method} mergeSorted(DataFrame $other, string $key): DataFrame
+```
+
+Merge two sorted DataFrames by a key column.
+
+:param DataFrame $other: The other sorted DataFrame
+:param string $key: Column to merge on (must be sorted in both DataFrames)
+:returns: DataFrame
+
+### unnest
+
+```{php:method} unnest(array $columns): DataFrame
+```
+
+Unnest struct columns into separate columns.
+
+:param array $columns: Names of struct columns to unnest
+:returns: DataFrame
+:raises Polars\\Exception: If columns are not of Struct type
+
+## Advanced Joins
+
+### joinWhere
+
+```{php:method} joinWhere(DataFrame $other, array $predicates): DataFrame
+```
+
+Join with another DataFrame using arbitrary predicates.
+
+:param DataFrame $other: The right DataFrame
+:param array $predicates: Array of Expr predicate objects
+:returns: DataFrame
+
+**Example:**
+
+```php
+$result = $df1->joinWhere($df2, [Expr::col('a')->le(Expr::col('b'))]);
+```
+
+### joinAsof
+
+```{php:method} joinAsof(DataFrame $other, string $on, ?string $strategy = null, ?string $leftBy = null, ?string $rightBy = null, ?string $tolerance = null): DataFrame
+```
+
+Perform an asof join with another DataFrame.
+
+:param DataFrame $other: The right DataFrame
+:param string $on: Column to join on (must be sorted)
+:param string|null $strategy: Join strategy - 'backward' (default), 'forward', 'nearest'
+:param string|null $leftBy: Group by column for left DataFrame
+:param string|null $rightBy: Group by column for right DataFrame
+:param string|null $tolerance: Tolerance for the asof join (time duration string e.g. "5m")
+:returns: DataFrame
+
+## SQL
+
+### sql
+
+```{php:method} sql(string $query): DataFrame
+```
+
+Execute a SQL query against this DataFrame. The DataFrame is registered as table named "self".
+
+:param string $query: SQL query string
+:returns: DataFrame
+
+**Example:**
+
+```php
+$result = $df->sql("SELECT name, age FROM self WHERE age > 30");
+```
+
+## Deprecated
+
+### withRowCount
+
+```{php:method} withRowCount(string $name = "row_nr", int $offset = 0): DataFrame
+```
+
+Add a row count column. Deprecated alias for withRowIndex.
+
+:param string $name: Name of the count column (default: "row_nr")
+:param int $offset: Starting offset (default: 0)
 :returns: DataFrame
 
 ## Descriptive Methods
@@ -886,26 +1166,35 @@ Get descriptive statistics (count, mean, std, min, max, median, etc.).
 
 ### sample
 
-```{php:method} sample(int $n, bool $withReplacement = false, bool $shuffle = true, ?int $seed = null): DataFrame
+```{php:method} sample(int $n = 0, bool $withReplacement = false, bool $shuffle = true, ?float $fraction = null, ?int $seed = null): DataFrame
 ```
 
-Randomly sample n rows.
+Randomly sample rows by count or fraction.
 
-:param int $n: Number of rows to sample
+:param int $n: Number of rows to sample (ignored if $fraction is set)
 :param bool $withReplacement: Allow sampling with replacement (default: false)
 :param bool $shuffle: Shuffle the result (default: true)
+:param float|null $fraction: Fraction of rows to sample (0.0 to 1.0), overrides $n
 :param int|null $seed: Random seed for reproducibility
 :returns: DataFrame
 
+**Example:**
+
+```php
+$df->sample(10, seed: 42);
+$df->sample(fraction: 0.5, seed: 42);
+```
+
 ### transpose
 
-```{php:method} transpose(bool $includeHeader = false, string $headerName = "column"): DataFrame
+```{php:method} transpose(bool $includeHeader = false, string $headerName = "column", ?array $columnNames = null): DataFrame
 ```
 
 Transpose the DataFrame.
 
 :param bool $includeHeader: Include column names as a column (default: false)
 :param string $headerName: Name for the header column (default: "column")
+:param array|null $columnNames: Custom names for the transposed columns
 :returns: DataFrame
 
 ### topK
