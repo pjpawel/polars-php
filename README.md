@@ -74,6 +74,11 @@ $df->min();
 
 ## Installation
 
+### Pre-built Binaries
+Pre-built binaries are available for Linux and macOS.
+There were compiled for PHP 8.3, 8.4 and 8.5.
+Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
+
 ### Building from Source
 
 ```bash
@@ -81,16 +86,16 @@ $df->min();
 git clone https://github.com/pjpawel/polars-php.git
 cd polars-php/php
 
-# Build extension for debug
-composer build:debug
+# Build extension for release
+composer build:release
 
-# Or build the extension for release
-# composer build:release
+# Or build the extension for debug
+# composer build:debug
 
 # Verify installation
-php -d extension=../target/debug/libpolars_php.so -m | grep polars
+php -d extension=../target/release/libpolars_php.so -m | grep polars
 
-# Run php tests
+# Optional: Run php tests
 composer test:debug
 ```
 
@@ -110,16 +115,16 @@ composer bench:purephp   # Run only pure PHP benchmarks
 
 ### Benchmark Operations
 
-| Operation          | Polars-PHP                     | Pure PHP Equivalent          |
-|--------------------|--------------------------------|------------------------------|
-| DataFrame Create   | `new DataFrame($data)`         | Array assignment             |
-| CSV Read           | `DataFrame::readCsv($path)`    | `fgetcsv()` loop             |
-| CSV Write          | `$df->writeCsv($path)`         | `fputcsv()` loop             |
-| Aggregation        | `$df->sum()`, `mean()`, etc.   | `array_sum()`, manual calc   |
-| Filter             | `$df->filter(Expr::col()->gt())`| `array_filter()`            |
-| Sort               | `$df->sort('column')`          | `usort()`                    |
-| Join               | `$df->join($df2, ...)`         | Hash-join with `foreach`     |
-| Column Access      | `$df['column']`                | `array_column()`             |
+| Operation        | Polars-PHP                       | Pure PHP Equivalent        |
+|------------------|----------------------------------|----------------------------|
+| DataFrame Create | `new DataFrame($data)`           | Array assignment           |
+| CSV Read         | `DataFrame::readCsv($path)`      | `fgetcsv()` loop           |
+| CSV Write        | `$df->writeCsv($path)`           | `fputcsv()` loop           |
+| Aggregation      | `$df->sum()`, `mean()`, etc.     | `array_sum()`, manual calc |
+| Filter           | `$df->filter(Expr::col()->gt())` | `array_filter()`           |
+| Sort             | `$df->sort('column')`            | `usort()`                  |
+| Join             | `$df->join($df2, ...)`           | Hash-join with `foreach`   |
+| Column Access    | `$df['column']`                  | `array_column()`           |
 
 ## Contributing
 
