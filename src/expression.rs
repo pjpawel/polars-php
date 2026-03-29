@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use crate::exception::{ExtResult, PolarsException};
 use ext_php_rs::flags::DataType;
 use ext_php_rs::types::{ZendObject, Zval};
@@ -33,7 +35,6 @@ impl PolarsExpr {
         Self(all().as_expr())
     }
 
-    #[allow(non_snake_case)]
     #[php(defaults(ignoreNulls = true), optional = ignoreNulls)]
     pub fn any(&self, ignoreNulls: bool) -> Self {
         self.0.clone().any(ignoreNulls).into()
@@ -244,6 +245,16 @@ impl PolarsExpr {
         self.0.clone().alias(&name).into()
     }
 
+    // /// Exclude column or columns
+    // pub fn exclude(&self, columns: Vec<String>) -> ExtResult<Self> {
+    //     self.0
+    //         .clone()
+    //         .into_selector()
+    //         .or_else(|| PolarsException::new("Failed to create selector".to_string()))?
+    //         .exclude_cols(&columns)
+    //         .into()
+    // }
+
     /// Shift values by n positions
     pub fn shift(&self, n: &Zval) -> ExtResult<Self> {
         let n_expr = zval_to_expr(n)?;
@@ -264,8 +275,7 @@ impl PolarsExpr {
         let target = crate::common::parse_dtype(&dtype)?;
         Ok(self.0.clone().cast(target).into())
     }
-
-    #[allow(non_snake_case)]
+    
     #[php(name = "isBetween")]
     pub fn is_between(
         &self,
@@ -379,7 +389,7 @@ pub fn zval_to_expr(value: &Zval) -> ExtResult<Expr> {
                 }
                 value.extract::<&PolarsExpr>().unwrap().into()
             },
-            default => {
+            _default => {
                 return Err(PolarsException::new("Cannot convert variable to expression. Possible values are: int, float, string, boolean, or null.".to_string()))
             }
         }
