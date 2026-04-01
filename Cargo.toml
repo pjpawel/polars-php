@@ -8,7 +8,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 either = "1"
-ext-php-rs = "0.15.7"
+ext-php-rs = "0.15.8"
 polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones", "random", "pivot", "propagate_nans", "partition_by", "interpolate", "merge_sorted", "dtype-struct", "asof_join", "sql", "iejoin", "semi_anti_join"] }
 polars-ops = { version = "0.52.0", features = ["mode", "to_dummies"] }
 
@@ -16,7 +16,8 @@ polars-ops = { version = "0.52.0", features = ["mode", "to_dummies"] }
 opt-level = 3
 lto = true
 codegen-units = 1
-strip = true
+# strip = true
+strip = "debuginfo"
 
 [package.metadata.php]
 # Extension name as it will appear in PHP
