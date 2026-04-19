@@ -8,8 +8,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 either = "1"
-ext-php-rs = "0.15.8"
-polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones", "random", "pivot", "propagate_nans", "partition_by", "interpolate", "merge_sorted", "dtype-struct", "asof_join", "sql", "iejoin", "semi_anti_join"] }
+ext-php-rs = "0.15.10"
+polars = { version = "0.52.0", features = ["lazy", "csv", "parquet", "json", "round_series", "product", "mode", "is_between", "timezones", "random", "pivot", "propagate_nans", "partition_by", "interpolate", "merge_sorted", "dtype-struct", "asof_join", "sql", "iejoin", "semi_anti_join", "approx_unique", "moment", "unique_counts", "bitwise"] }
 polars-ops = { version = "0.52.0", features = ["mode", "to_dummies"] }
 
 [profile.release]
