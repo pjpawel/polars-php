@@ -22,4 +22,5 @@ pub fn get_module(module: ModuleBuilder) -> ModuleBuilder {
         .class::<lazy_frame::PhpLazyFrame>()
         .class::<lazy_group_by::PhpLazyGroupBy>()
         .enumeration::<expression::PolarsClosedInterval>()
+        .enumeration::<expression::PolarsQuantileMethod>()
 }

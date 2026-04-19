@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Polars\ClosedInterval;
 use Polars\DataFrame;
 use Polars\Expr;
+use Polars\QuantileMethod;
 
 class DataFrameExprIntegrationTest extends TestCase
 {
@@ -550,5 +551,130 @@ class DataFrameExprIntegrationTest extends TestCase
 
         $result = $df->select([Expr::col('f')->mean()]);
         $this->assertEqualsWithDelta(3.0, $result->item(), 0.001);
+    }
+
+    // New Aggregation Expression Tests
+
+    public function testSelectWithApproxNUnique(): void
+    {
+        $df = new DataFrame(['x' => [1, 2, 2, 3, 3, 3]]);
+
+        $result = $df->select([Expr::col('x')->approxNUnique()]);
+
+        $this->assertEquals(1, $result->height());
+        // HyperLogLog approximation — allow some tolerance
+        $this->assertGreaterThanOrEqual(2, $result->item());
+        $this->assertLessThanOrEqual(4, $result->item());
+    }
+
+    public function testSelectWithArgMax(): void
+    {
+        $df = new DataFrame(['x' => [10, 50, 30, 20, 40]]);
+
+        $result = $df->select([Expr::col('x')->argMax()]);
+
+        $this->assertEquals(1, $result->item()); // index of 50
+    }
+
+    public function testSelectWithArgMin(): void
+    {
+        $df = new DataFrame(['x' => [10, 50, 30, 20, 40]]);
+
+        $result = $df->select([Expr::col('x')->argMin()]);
+
+        $this->assertEquals(0, $result->item()); // index of 10
+    }
+
+    public function testSelectWithBitwiseAnd(): void
+    {
+        $df = new DataFrame(['x' => [0b1111, 0b1100, 0b1010]]);
+
+        $result = $df->select([Expr::col('x')->bitwiseAnd()]);
+
+        $this->assertEquals(0b1000, $result->item()); // 15 & 12 & 10 = 8
+    }
+
+    public function testSelectWithBitwiseOr(): void
+    {
+        $df = new DataFrame(['x' => [0b0001, 0b0010, 0b0100]]);
+
+        $result = $df->select([Expr::col('x')->bitwiseOr()]);
+
+        $this->assertEquals(0b0111, $result->item()); // 1 | 2 | 4 = 7
+    }
+
+    public function testSelectWithBitwiseXor(): void
+    {
+        $df = new DataFrame(['x' => [0b1111, 0b1010, 0b0011]]);
+
+        $result = $df->select([Expr::col('x')->bitwiseXor()]);
+
+        $this->assertEquals(0b0110, $result->item()); // 15 ^ 10 ^ 3 = 6
+    }
+
+    public function testSelectWithImplode(): void
+    {
+        $df = new DataFrame(['x' => [1, 2, 3]]);
+
+        $result = $df->select([Expr::col('x')->implode()]);
+
+        $this->assertEquals(1, $result->height());
+    }
+
+    public function testSelectWithKurtosis(): void
+    {
+        $df = new DataFrame(['x' => [1, 2, 3, 4, 5]]);
+
+        $result = $df->select([Expr::col('x')->kurtosis()]);
+
+        $this->assertEquals(1, $result->height());
+        $this->assertIsFloat($result->item());
+    }
+
+    public function testSelectWithMode(): void
+    {
+        $df = new DataFrame(['x' => [1, 2, 2, 3, 3, 3]]);
+
+        $result = $df->select([Expr::col('x')->mode()]);
+
+        $this->assertEquals(3, $result[0]->item());
+    }
+
+    public function testSelectWithQuantileNearest(): void
+    {
+        $df = new DataFrame(['x' => [1, 2, 3, 4, 5]]);
+
+        $result = $df->select([Expr::col('x')->quantile(0.5, QuantileMethod::Nearest)]);
+
+        $this->assertEquals(3, $result->item());
+    }
+
+    public function testSelectWithQuantileLinear(): void
+    {
+        $df = new DataFrame(['x' => [1.0, 2.0, 3.0, 4.0, 5.0]]);
+
+        $result = $df->select([Expr::col('x')->quantile(0.5, QuantileMethod::Linear)]);
+
+        $this->assertEqualsWithDelta(3.0, $result->item(), 0.001);
+    }
+
+    public function testSelectWithSkew(): void
+    {
+        // Symmetric data should have skew close to 0
+        $df = new DataFrame(['x' => [1, 2, 3, 4, 5]]);
+
+        $result = $df->select([Expr::col('x')->skew()]);
+
+        $this->assertEqualsWithDelta(0.0, $result->item(), 0.001);
+    }
+
+    public function testSelectWithUniqueCounts(): void
+    {
+        $df = new DataFrame(['x' => [1, 2, 2, 3, 3, 3]]);
+
+        $result = $df->select([Expr::col('x')->uniqueCounts()]);
+
+        // Returns counts per unique value: 3 unique values
+        $this->assertEquals(3, $result->height());
     }
 }

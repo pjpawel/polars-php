@@ -13,28 +13,28 @@
 | and_                   |                   | [ ]             | [ ]        |                                               |
 | any                    |                   | [X]             | [ ]        |                                               |
 | append                 |                   | [ ]             | [ ]        |                                               |
-| approx_n_unique        |                   | [ ]             | [ ]        |                                               |
+| approx_n_unique        | approxNUnique     | [X]             | [X]        |                                               |
 | arccos                 |                   | [ ]             | [ ]        |                                               |
 | arccosh                |                   | [ ]             | [ ]        |                                               |
 | arcsin                 |                   | [ ]             | [ ]        |                                               |
 | arcsinh                |                   | [ ]             | [ ]        |                                               |
 | arctan                 |                   | [ ]             | [ ]        |                                               |
 | arctanh                |                   | [ ]             | [ ]        |                                               |
-| arg_max                |                   | [ ]             | [ ]        |                                               |
-| arg_min                |                   | [ ]             | [ ]        |                                               |
+| arg_max                | argMax            | [X]             | [X]        |                                               |
+| arg_min                | argMin            | [X]             | [X]        |                                               |
 | arg_sort               |                   | [ ]             | [ ]        |                                               |
 | arg_true               |                   | [ ]             | [ ]        |                                               |
 | arg_unique             |                   | [ ]             | [ ]        |                                               |
 | backward_fill          |                   | [ ]             | [ ]        |                                               |
-| bitwise_and            |                   | [ ]             | [ ]        |                                               |
+| bitwise_and            | bitwiseAnd        | [X]             | [X]        | Aggregation reduction, not element-wise       |
 | bitwise_count_ones     |                   | [ ]             | [ ]        |                                               |
 | bitwise_count_zeros    |                   | [ ]             | [ ]        |                                               |
 | bitwise_leading_ones   |                   | [ ]             | [ ]        |                                               |
 | bitwise_leading_zeros  |                   | [ ]             | [ ]        |                                               |
-| bitwise_or             |                   | [ ]             | [ ]        |                                               |
+| bitwise_or             | bitwiseOr         | [X]             | [X]        | Aggregation reduction, not element-wise       |
 | bitwise_trailing_ones  |                   | [ ]             | [ ]        |                                               |
 | bitwise_trailing_zeros |                   | [ ]             | [ ]        |                                               |
-| bitwise_xor            |                   | [ ]             | [ ]        |                                               |
+| bitwise_xor            | bitwiseXor        | [X]             | [X]        | Aggregation reduction, not element-wise       |
 | bottom_k               |                   | [ ]             | [ ]        |                                               |
 | bottom_k_by            |                   | [ ]             | [ ]        |                                               |
 | cast                   |                   | [ ]             | [ ]        |                                               |
@@ -87,7 +87,7 @@
 | has_nulls              | hasNulls          | [X]             | [ ]        |                                               |
 | head                   |                   | [ ]             | [ ]        |                                               |
 | hist                   |                   | [ ]             | [ ]        |                                               |
-| implode                |                   | [ ]             | [ ]        |                                               |
+| implode                | implode           | [X]             | [X]        |                                               |
 | index_of               |                   | [ ]             | [ ]        |                                               |
 | inspect                |                   | [ ]             | [ ]        |                                               |
 | interpolate            |                   | [ ]             | [ ]        |                                               |
@@ -106,7 +106,7 @@
 | is_null                |                   | [ ]             | [ ]        |                                               |
 | is_unique              |                   | [ ]             | [ ]        |                                               |
 | item                   |                   | [ ]             | [ ]        |                                               |
-| kurtosis               |                   | [ ]             | [ ]        |                                               |
+| kurtosis               | kurtosis          | [X]             | [X]        |                                               |
 | last                   |                   | [X]             | [ ]        |                                               |
 | le                     |                   | [X]             | [ ]        |                                               |
 | len                    |                   | [X]             | [ ]        |                                               |
@@ -123,7 +123,7 @@
 | median                 |                   | [X]             | [ ]        |                                               |
 | min                    |                   | [X]             | [ ]        |                                               |
 | mod                    | modulo            | [X]             | [ ]        |                                               |
-| mode                   |                   | [ ]             | [ ]        |                                               |
+| mode                   | mode              | [X]             | [X]        |                                               |
 | mul                    |                   | [X]             | [ ]        |                                               |
 | nan_max                |                   | [X]             | [ ]        |                                               |
 | nan_min                |                   | [X]             | [ ]        |                                               |
@@ -143,7 +143,7 @@
 | pow                    |                   | [X]             | [ ]        |                                               |
 | product                |                   | [X]             | [ ]        |                                               |
 | qcut                   |                   | [ ]             | [ ]        |                                               |
-| quantile               |                   | [ ]             | [ ]        |                                               |
+| quantile               | quantile          | [X]             | [X]        | Uses QuantileMethod enum for interpolation    |
 | radians                |                   | [ ]             | [ ]        |                                               |
 | rank                   |                   | [ ]             | [ ]        |                                               |
 | rechunk                |                   | [ ]             | [ ]        |                                               |
@@ -189,7 +189,7 @@
 | sign                   |                   | [ ]             | [ ]        |                                               |
 | sin                    |                   | [ ]             | [ ]        |                                               |
 | sinh                   |                   | [ ]             | [ ]        |                                               |
-| skew                   |                   | [ ]             | [ ]        |                                               |
+| skew                   | skew              | [X]             | [X]        |                                               |
 | slice                  |                   | [ ]             | [ ]        |                                               |
 | sort                   |                   | [ ]             | [ ]        |                                               |
 | sort_by                |                   | [ ]             | [ ]        |                                               |
@@ -205,7 +205,7 @@
 | top_k_by               |                   | [ ]             | [ ]        |                                               |
 | truediv                | div               | [X]             | [ ]        |                                               |
 | unique                 |                   | [ ]             | [ ]        |                                               |
-| unique_counts          |                   | [ ]             | [ ]        |                                               |
+| unique_counts          | uniqueCounts      | [X]             | [X]        |                                               |
 | upper_bound            |                   | [ ]             | [ ]        |                                               |
 | value_counts           |                   | [ ]             | [ ]        |                                               |
 | var                    | variance          | [X]             | [ ]        |                                               |

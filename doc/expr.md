@@ -76,6 +76,15 @@ $expr = Expr::all();
 
 All aggregation methods return a new `Expr` and can be chained.
 
+### approxNUnique
+
+```{php:method} approxNUnique(): Expr
+```
+
+Approximate count of unique values using HyperLogLog.
+
+:returns: Expr
+
 ### any
 
 ```{php:method} any(bool $ignoreNulls = true): Expr
@@ -84,6 +93,51 @@ All aggregation methods return a new `Expr` and can be chained.
 Return whether any value is true.
 
 :param bool $ignoreNulls: Whether to ignore null values (default: true)
+:returns: Expr
+
+### argMax
+
+```{php:method} argMax(): Expr
+```
+
+Get the index of the maximum value.
+
+:returns: Expr
+
+### argMin
+
+```{php:method} argMin(): Expr
+```
+
+Get the index of the minimum value.
+
+:returns: Expr
+
+### bitwiseAnd
+
+```{php:method} bitwiseAnd(): Expr
+```
+
+Perform a bitwise AND reduction across all values in the column.
+
+:returns: Expr
+
+### bitwiseOr
+
+```{php:method} bitwiseOr(): Expr
+```
+
+Perform a bitwise OR reduction across all values in the column.
+
+:returns: Expr
+
+### bitwiseXor
+
+```{php:method} bitwiseXor(): Expr
+```
+
+Perform a bitwise XOR reduction across all values in the column.
+
 :returns: Expr
 
 ### count
@@ -102,6 +156,26 @@ Count the number of values.
 
 Get the first value.
 
+:returns: Expr
+
+### implode
+
+```{php:method} implode(): Expr
+```
+
+Aggregate all values into a list.
+
+:returns: Expr
+
+### kurtosis
+
+```{php:method} kurtosis(bool $fisher = true, bool $bias = true): Expr
+```
+
+Compute the kurtosis (Fisher or Pearson) of the column.
+
+:param bool $fisher: If true, Fisher's definition is used (normal => 0.0). If false, Pearson's definition is used (normal => 3.0). Default: true
+:param bool $bias: If false, the calculations are corrected for statistical bias. Default: true
 :returns: Expr
 
 ### last
@@ -158,6 +232,15 @@ Get the minimum value.
 
 :returns: Expr
 
+### mode
+
+```{php:method} mode(): Expr
+```
+
+Compute the most frequently occurring value.
+
+:returns: Expr
+
 ### nUnique
 
 ```{php:method} nUnique(): Expr
@@ -203,6 +286,28 @@ Get the product of all values.
 
 :returns: Expr
 
+### quantile
+
+```{php:method} quantile(mixed $quantile, QuantileMethod $interpolation): Expr
+```
+
+Compute the quantile value of the column.
+
+:param mixed $quantile: Quantile between 0.0 and 1.0 (float, int, or Expr)
+:param QuantileMethod $interpolation: Interpolation method to use
+:returns: Expr
+:raises Polars\\Exception: If quantile value cannot be converted to expression
+
+### skew
+
+```{php:method} skew(bool $bias = true): Expr
+```
+
+Compute the sample skewness of the column.
+
+:param bool $bias: If false, the calculations are corrected for statistical bias. Default: true
+:returns: Expr
+
 ### std
 
 ```{php:method} std(int $ddof = 1): Expr
@@ -219,6 +324,15 @@ Get the standard deviation.
 ```
 
 Get the sum of all values.
+
+:returns: Expr
+
+### uniqueCounts
+
+```{php:method} uniqueCounts(): Expr
+```
+
+Return a count of the unique values in the order of appearance.
 
 :returns: Expr
 

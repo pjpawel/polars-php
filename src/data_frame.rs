@@ -109,10 +109,7 @@ impl PhpDataFrame {
     /// ]);
     /// ```
     #[php(defaults(byKeys = true))]
-    pub fn __construct(
-        data: &ZendHashTable,
-        byKeys: bool,
-    ) -> ExtResult<Self> {
+    pub fn __construct(data: &ZendHashTable, byKeys: bool) -> ExtResult<Self> {
         let col_vec = match data.is_empty() {
             true => Vec::new(),
             false => match byKeys {
@@ -132,7 +129,6 @@ impl PhpDataFrame {
     // Lazy //
 
     /// Convert this DataFrame to a LazyFrame for lazy evaluation
-    /// @return \Polars\LazyFrame
     pub fn lazy(&self) -> crate::lazy_frame::PhpLazyFrame {
         crate::lazy_frame::PhpLazyFrame {
             inner: self.inner.clone().lazy(),
@@ -595,12 +591,7 @@ impl PhpDataFrame {
 
     /// Write to CSV file
     #[php(defaults(includeHeaders = true, separator = ','.to_string()))]
-    pub fn write_csv(
-        &self,
-        path: String,
-         includeHeader: bool,
-        separator: String,
-    ) -> ExtResult<()> {
+    pub fn write_csv(&self, path: String, includeHeader: bool, separator: String) -> ExtResult<()> {
         if separator.len() != 1 {
             return Err(PolarsException::new(
                 "Separator must of length 1".to_string(),
