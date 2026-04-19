@@ -6,6 +6,7 @@ use PHPUnit\Framework\TestCase;
 use Polars\ClosedInterval;
 use Polars\DataFrame;
 use Polars\Expr;
+use Polars\QuantileMethod;
 
 class ExprTest extends TestCase
 {
@@ -182,6 +183,97 @@ class ExprTest extends TestCase
     {
         $expr = Expr::col('abc');
         $this->assertInstanceOf(Expr::class, $expr->variance(2));
+    }
+
+    public function testApproxNUnique(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->approxNUnique());
+    }
+
+    public function testArgMax(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->argMax());
+    }
+
+    public function testArgMin(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->argMin());
+    }
+
+    public function testBitwiseAnd(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->bitwiseAnd());
+    }
+
+    public function testBitwiseOr(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->bitwiseOr());
+    }
+
+    public function testBitwiseXor(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->bitwiseXor());
+    }
+
+    public function testImplode(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->implode());
+    }
+
+    public function testKurtosis(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->kurtosis());
+    }
+
+    public function testKurtosisWithParams(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->kurtosis(false, false));
+    }
+
+    public function testMode(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->mode());
+    }
+
+    public function testQuantile(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->quantile(0.5, QuantileMethod::Linear));
+    }
+
+    public function testQuantileWithExpr(): void
+    {
+        $expr = Expr::col('abc');
+        $quantile = new Expr(0.75);
+        $this->assertInstanceOf(Expr::class, $expr->quantile($quantile, QuantileMethod::Nearest));
+    }
+
+    public function testSkew(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->skew());
+    }
+
+    public function testSkewWithBias(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->skew(false));
+    }
+
+    public function testUniqueCounts(): void
+    {
+        $expr = Expr::col('abc');
+        $this->assertInstanceOf(Expr::class, $expr->uniqueCounts());
     }
 
     // Comparison methods

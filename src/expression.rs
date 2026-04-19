@@ -6,6 +6,7 @@ use ext_php_rs::types::{ZendObject, Zval};
 use ext_php_rs::{php_class, php_enum, php_impl};
 use polars::lazy::dsl::{Expr, all, col, cols, lit};
 use polars::prelude::ClosedInterval;
+use polars::prelude::QuantileMethod;
 use polars::prelude::{Literal, NULL};
 use std::ops::{Add, Div, Neg};
 
@@ -96,9 +97,20 @@ impl PolarsExpr {
         self.0.clone().product().into()
     }
 
-    // pub fn quantile(&self) -> Self {
-    //     self.0.clone().product().into()
-    // }
+    /// @param int|float|string|bool|null|\Polars\Expr $quantile Quantile value (0.0 to 1.0)
+    /// @throws Polars\Exception
+    pub fn quantile(
+        &self,
+        quantile: &Zval,
+        interpolation: PolarsQuantileMethod,
+    ) -> ExtResult<Self> {
+        let quantile_expr = zval_to_expr(quantile)?;
+        Ok(self
+            .0
+            .clone()
+            .quantile(quantile_expr, interpolation.into())
+            .into())
+    }
 
     #[php(defaults(ddof = 1))]
     pub fn std(&self, ddof: u8) -> Self {
@@ -112,6 +124,59 @@ impl PolarsExpr {
     #[php(defaults(ddof = 1))]
     pub fn variance(&self, ddof: u8) -> Self {
         self.0.clone().var(ddof).into()
+    }
+
+    #[php(name = "approxNUnique")]
+    pub fn approx_n_unique(&self) -> Self {
+        self.0.clone().approx_n_unique().into()
+    }
+
+    #[php(name = "argMax")]
+    pub fn arg_max(&self) -> Self {
+        self.0.clone().arg_max().into()
+    }
+
+    #[php(name = "argMin")]
+    pub fn arg_min(&self) -> Self {
+        self.0.clone().arg_min().into()
+    }
+
+    #[php(name = "bitwiseAnd")]
+    pub fn bitwise_and(&self) -> Self {
+        self.0.clone().bitwise_and().into()
+    }
+
+    #[php(name = "bitwiseOr")]
+    pub fn bitwise_or(&self) -> Self {
+        self.0.clone().bitwise_or().into()
+    }
+
+    #[php(name = "bitwiseXor")]
+    pub fn bitwise_xor(&self) -> Self {
+        self.0.clone().bitwise_xor().into()
+    }
+
+    pub fn implode(&self) -> Self {
+        self.0.clone().implode().into()
+    }
+
+    #[php(defaults(fisher = true, bias = true))]
+    pub fn kurtosis(&self, fisher: bool, bias: bool) -> Self {
+        self.0.clone().kurtosis(fisher, bias).into()
+    }
+
+    pub fn mode(&self) -> Self {
+        self.0.clone().mode().into()
+    }
+
+    #[php(defaults(bias = true))]
+    pub fn skew(&self, bias: bool) -> Self {
+        self.0.clone().skew(bias).into()
+    }
+
+    #[php(name = "uniqueCounts")]
+    pub fn unique_counts(&self) -> Self {
+        self.0.clone().unique_counts().into()
     }
 
     // OPERATORS //
@@ -346,6 +411,30 @@ impl From<PolarsClosedInterval> for ClosedInterval {
             PolarsClosedInterval::Left => ClosedInterval::Left,
             PolarsClosedInterval::Right => ClosedInterval::Right,
             PolarsClosedInterval::None => ClosedInterval::None,
+        }
+    }
+}
+
+#[php_enum]
+#[php(name = "Polars\\QuantileMethod")]
+pub enum PolarsQuantileMethod {
+    Nearest,
+    Lower,
+    Higher,
+    Midpoint,
+    Linear,
+    Equiprobable,
+}
+
+impl From<PolarsQuantileMethod> for QuantileMethod {
+    fn from(method: PolarsQuantileMethod) -> Self {
+        match method {
+            PolarsQuantileMethod::Nearest => QuantileMethod::Nearest,
+            PolarsQuantileMethod::Lower => QuantileMethod::Lower,
+            PolarsQuantileMethod::Higher => QuantileMethod::Higher,
+            PolarsQuantileMethod::Midpoint => QuantileMethod::Midpoint,
+            PolarsQuantileMethod::Linear => QuantileMethod::Linear,
+            PolarsQuantileMethod::Equiprobable => QuantileMethod::Equiprobable,
         }
     }
 }

@@ -63,6 +63,7 @@ expr
 datatype
 exception
 closedinterval
+quantilemethod
 ```
 
 ## Requirements
