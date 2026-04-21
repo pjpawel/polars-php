@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use crate::common::{any_value_to_zval, extract_exprs, parse_dtype};
 use crate::data_type::PolarsDataType;
 use crate::exception::{ExtResult, PolarsException};
@@ -76,7 +78,7 @@ fn col_vals_to_column(name: &str, values: Vec<Zval>) -> ExtResult<Column> {
             let col_values: Vec<Option<String>> = vec![None; values.len()];
             Ok(Column::new(name.into(), col_values))
         }
-        default => Err(PolarsException::new(format!(
+        _default => Err(PolarsException::new(format!(
             "Unsupported type '{}' for column '{}'",
             first_value.get_type(),
             name
@@ -107,10 +109,7 @@ impl PhpDataFrame {
     /// ]);
     /// ```
     #[php(defaults(byKeys = true))]
-    pub fn __construct(
-        data: &ZendHashTable,
-        #[allow(non_snake_case)] byKeys: bool,
-    ) -> ExtResult<Self> {
+    pub fn __construct(data: &ZendHashTable, byKeys: bool) -> ExtResult<Self> {
         let col_vec = match data.is_empty() {
             true => Vec::new(),
             false => match byKeys {
@@ -130,7 +129,6 @@ impl PhpDataFrame {
     // Lazy //
 
     /// Convert this DataFrame to a LazyFrame for lazy evaluation
-    /// @return \Polars\LazyFrame
     pub fn lazy(&self) -> crate::lazy_frame::PhpLazyFrame {
         crate::lazy_frame::PhpLazyFrame {
             inner: self.inner.clone().lazy(),
@@ -536,7 +534,6 @@ impl PhpDataFrame {
     }
 
     /// Read a DataFrame from a CSV file
-    #[allow(non_snake_case)]
     #[php(defaults(hasHeader = true, separator = ",".to_string()))]
     pub fn read_csv(path: String, hasHeader: bool, separator: String) -> ExtResult<Self> {
         if separator.len() != 1 {
@@ -594,12 +591,7 @@ impl PhpDataFrame {
 
     /// Write to CSV file
     #[php(defaults(includeHeaders = true, separator = ','.to_string()))]
-    pub fn write_csv(
-        &self,
-        path: String,
-        #[allow(non_snake_case)] includeHeader: bool,
-        separator: String,
-    ) -> ExtResult<()> {
+    pub fn write_csv(&self, path: String, includeHeader: bool, separator: String) -> ExtResult<()> {
         if separator.len() != 1 {
             return Err(PolarsException::new(
                 "Separator must of length 1".to_string(),
@@ -662,7 +654,6 @@ impl PhpDataFrame {
     /// @param bool $nullsLast Put null values last
     /// @param bool $maintainOrder Maintain order of equal elements (stable sort)
     /// @param bool $multithreaded Use multithreaded sorting
-    #[allow(non_snake_case)]
     #[php(defaults(
         descending = false,
         nullsLast = true,
@@ -733,7 +724,6 @@ impl PhpDataFrame {
     /// Rename columns
     /// @param string[] $existing Old column names
     /// @param string[] $newNames New column names
-    #[allow(non_snake_case)]
     pub fn rename(&self, existing: Vec<String>, newNames: Vec<String>) -> ExtResult<Self> {
         let inner = self
             .inner
@@ -994,7 +984,7 @@ impl PhpDataFrame {
     /// @param string|null $suffix Suffix for duplicate column names (default: '_right')
     /// @param string|null $validate Join validation: 'm:m', 'm:1', '1:m', '1:1'
     /// @param bool|null $coalesce Coalesce join columns
-    #[allow(non_snake_case)]
+    #[allow(clippy::too_many_arguments)]
     #[php(defaults(how = "inner".to_string()))]
     pub fn join(
         &self,
@@ -1310,7 +1300,6 @@ impl PhpDataFrame {
     /// @param string[] $index Columns to use as identifier
     /// @param string|null $variableName Custom name for the variable column (default: 'variable')
     /// @param string|null $valueName Custom name for the value column (default: 'value')
-    #[allow(non_snake_case)]
     pub fn unpivot(
         &self,
         on: Vec<String>,
@@ -1476,7 +1465,6 @@ impl PhpDataFrame {
     /// @param bool $shuffle Shuffle the sampled rows
     /// @param float|null $fraction Fraction of rows to sample (0.0 to 1.0), overrides $n
     /// @param int|null $seed Random seed for reproducibility
-    #[allow(non_snake_case)]
     #[php(defaults(n = 0, withReplacement = false, shuffle = true))]
     pub fn sample(
         &self,
@@ -1511,7 +1499,6 @@ impl PhpDataFrame {
     /// @param bool $includeHeader Include column names as first column
     /// @param string $headerName Name for the header column
     /// @param string[]|null $columnNames Custom names for the transposed columns
-    #[allow(non_snake_case)]
     #[php(defaults(includeHeader = false, headerName = "column".to_string()))]
     pub fn transpose(
         &mut self,
@@ -1583,7 +1570,6 @@ impl PhpDataFrame {
     }
 
     /// Unpivot (alias for unpivot, deprecated name)
-    #[allow(non_snake_case)]
     pub fn melt(
         &self,
         on: Vec<String>,
@@ -1757,7 +1743,6 @@ impl PhpDataFrame {
     /// @param bool $dropFirst Drop the first category to avoid multicollinearity
     #[php(name = "toDummies")]
     #[php(defaults(separator = "_".to_string(), dropFirst = false))]
-    #[allow(non_snake_case)]
     pub fn to_dummies(
         &self,
         columns: Option<Vec<String>>,
@@ -1783,7 +1768,6 @@ impl PhpDataFrame {
     /// @param bool $includeKey Include the partition key columns in each partition
     #[php(name = "partitionBy")]
     #[php(defaults(maintainOrder = true, includeKey = true))]
-    #[allow(non_snake_case)]
     pub fn partition_by(
         &self,
         by: Vec<String>,
@@ -1839,7 +1823,6 @@ impl PhpDataFrame {
     /// @param string[]|null $values Column(s) to aggregate
     /// @param string|null $aggregateFunction Aggregation function: 'first', 'last', 'sum', 'mean', 'median', 'min', 'max', 'count', 'len'
     /// @param bool $sortColumns Sort the resulting pivot columns
-    #[allow(non_snake_case)]
     #[php(defaults(sortColumns = false))]
     pub fn pivot(
         &self,
@@ -1898,7 +1881,6 @@ impl PhpDataFrame {
     /// @param string|null $tolerance Tolerance for the asof join (time duration string e.g. "5m")
     /// @param string $strategy Join strategy: 'backward', 'forward', 'nearest'
     #[php(name = "joinAsof")]
-    #[allow(non_snake_case)]
     pub fn join_asof(
         &self,
         other: &PhpDataFrame,
@@ -1934,14 +1916,15 @@ impl PhpDataFrame {
         };
 
         let on_expr = col(&on);
+        let ref_slice = std::slice::from_ref(&on_expr);
         let inner = self
             .inner
             .clone()
             .lazy()
             .join(
                 other.inner.clone().lazy(),
-                &[on_expr.clone()],
-                &[on_expr],
+                ref_slice,
+                ref_slice,
                 JoinArgs {
                     how: JoinType::AsOf(Box::new(options)),
                     ..Default::default()

@@ -3,26 +3,28 @@
 A PHP extension bringing the power of [Polars](https://pola.rs/) DataFrames to PHP.
 
 ```{note}
-This extension is under active development. Some features are not yet available.
+Some features are not yet available. Look in GitHub issues for updates.
 ```
 
 ## Installation
+
+### Pre-built Binaries
+Pre-built binaries are available for Linux and macOS.
+There were compiled for PHP 8.3, 8.4 and 8.5.
+Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
 
 ### Building from Source
 
 ```bash
 # Clone the repository
 git clone https://github.com/pjpawel/polars-php.git
-cd polars-php
-
-# Install PHP dependencies
-cd php && composer install
+cd polars-php/php
 
 # Build the extension
-composer build:debug
+composer build:relese
 
 # Verify installation
-php -d extension=../target/debug/libpolars_php.so -m | grep polars
+php -d extension=../target/release/libpolars_php.so -m | grep polars
 ```
 
 ## Quick Example
@@ -61,6 +63,7 @@ expr
 datatype
 exception
 closedinterval
+quantilemethod
 ```
 
 ## Requirements
@@ -71,4 +74,4 @@ closedinterval
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/pjpawel/polars-php/blob/main/LICENSE) for details.
+MIT License – see [LICENSE](https://github.com/pjpawel/polars-php/blob/main/LICENSE) for details.

@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use crate::common::any_value_to_zval;
 use crate::data_type::PolarsDataType;
 use crate::exception::{ExtResult, PolarsException};
@@ -644,7 +646,6 @@ impl PhpSeries {
 
     /// Sort the Series
     #[php(defaults(descending = false, nullsLast = true))]
-    #[allow(non_snake_case)]
     pub fn sort(&self, descending: bool, nullsLast: bool) -> ExtResult<Self> {
         let options = SortOptions::default()
             .with_order_descending(descending)

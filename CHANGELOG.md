@@ -3,6 +3,23 @@
 All notable changes to this project will be documented in this file.
 
 
+## 0.6.0
+
+### New Expr aggregation methods
+- [Feature] `Expr::approxNUnique()` — Approximate count of unique values
+- [Feature] `Expr::argMax()` — Get the index of the maximum value
+- [Feature] `Expr::argMin()` — Get the index of the minimum value
+- [Feature] `Expr::bitwiseAnd()` — Bitwise AND aggregation reduction
+- [Feature] `Expr::bitwiseOr()` — Bitwise OR aggregation reduction
+- [Feature] `Expr::bitwiseXor()` — Bitwise XOR aggregation reduction
+- [Feature] `Expr::implode()` — Aggregate values into a list
+- [Feature] `Expr::kurtosis()` — Compute excess kurtosis
+- [Feature] `Expr::mode()` — Compute the most frequent value
+- [Feature] `Expr::quantile()` — Compute quantile with interpolation method
+- [Feature] `Expr::skew()` — Compute skewness
+- [Feature] `Expr::uniqueCounts()` — Return count of unique values per value
+- [Feature] Add `Polars\QuantileMethod` enum for quantile interpolation
+
 ## 0.5.0
 
 ### Enhanced existing methods

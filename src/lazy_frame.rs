@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use crate::common::extract_exprs;
 use crate::data_frame::PhpDataFrame;
 use crate::data_type::PolarsDataType;
@@ -24,7 +26,6 @@ impl PhpLazyFrame {
     // Scan Methods (static constructors) //
 
     /// Scan a CSV file into a LazyFrame
-    #[allow(non_snake_case)]
     #[php(defaults(hasHeader = true, separator = ",".to_string()))]
     pub fn scan_csv(path: String, hasHeader: bool, separator: String) -> ExtResult<Self> {
         if separator.len() != 1 {
@@ -109,7 +110,6 @@ impl PhpLazyFrame {
 
     /// Sort by a single column
     /// @return \Polars\LazyFrame
-    #[allow(non_snake_case)]
     #[php(defaults(descending = false, nullsLast = true))]
     pub fn sort(&self, column: String, descending: bool, nullsLast: bool) -> Self {
         let opts = SortMultipleOptions::new()
@@ -326,7 +326,6 @@ impl PhpLazyFrame {
     /// @param string[] $existing Old column names
     /// @param string[] $newNames New column names
     /// @return \Polars\LazyFrame
-    #[allow(non_snake_case)]
     pub fn rename(&self, existing: Vec<String>, newNames: Vec<String>) -> Self {
         Self {
             inner: self.inner.clone().rename(existing, newNames, true),
@@ -488,7 +487,6 @@ impl PhpLazyFrame {
 
     /// Sink the LazyFrame to a CSV file and return the result as a DataFrame
     /// @return \Polars\DataFrame
-    #[allow(non_snake_case)]
     #[php(defaults(includeHeader = true, separator = ",".to_string()))]
     pub fn sink_csv(
         &self,
