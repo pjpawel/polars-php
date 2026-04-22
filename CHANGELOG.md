@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - [Feature] `Expr::skew()` — Compute skewness
 - [Feature] `Expr::uniqueCounts()` — Return count of unique values per value
 - [Feature] Add `Polars\QuantileMethod` enum for quantile interpolation
+- [Feature] Add `Polars\Expr::exclude()` method to exclude columns from multi-column expressions.
 
 ## 0.5.0
 

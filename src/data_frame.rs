@@ -10,7 +10,7 @@ use ext_php_rs::flags::DataType as PhpDataType;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ArrayKey, ZendHashTable, Zval};
 use ext_php_rs::zend::ce;
-use polars::lazy::dsl::{Expr, all, col, lit};
+use polars::lazy::dsl::{all, col, lit, Expr};
 use polars::prelude::{
     Column, CsvParseOptions, CsvReadOptions, CsvWriter, DataFrame, IntoLazy, IntoSeries, JoinArgs,
     JoinCoalesce, JoinType, JoinValidation, JsonFormat, JsonReader, JsonWriter, OptFlags,
@@ -275,6 +275,17 @@ impl PhpDataFrame {
     }
 
     // Attributes //
+
+    /// Get column names
+    /// @returns string[]
+    #[php(name = "columnNames")]
+    pub fn get_column_names(&self) -> Vec<String> {
+        self.inner
+            .get_column_names()
+            .iter()
+            .map(|c| c.to_string())
+            .collect()
+    }
 
     /// Get columns names
     /// @returns string[]

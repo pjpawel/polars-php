@@ -626,6 +626,41 @@ $expr = Expr::col('age')->isBetween(20, 40, ClosedInterval::Both);
 $result = $df->select([$expr]);
 ```
 
+## Selection Methods
+
+### exclude
+
+```{php:method} exclude(string|array|Expr $columns): Expr
+```
+
+Exclude specified columns from a multi-column expression. This is typically used with `Expr::all()` or `Expr::col()`.
+
+:param string|array|Expr $columns: Column name, array of column names, or a column expression to exclude.
+:returns: Expr
+:raises Polars\\Exception: If the expression is not a selector or if array elements are not strings.
+
+**Example:**
+
+```php
+use Polars\Expr;
+
+$df = new DataFrame([
+    'a' => [1, 2, 3],
+    'b' => [4, 5, 6],
+    'c' => [7, 8, 9],
+]);
+
+// Exclude column 'b' from all columns
+$result = $df->select([
+    Expr::all()->exclude('b')
+]);
+
+// Exclude multiple columns 'a' and 'c'
+$result = $df->select([
+    Expr::all()->exclude(['a', 'c'])
+]);
+```
+
 ## Method Chaining
 
 Expressions can be chained to build complex operations:
