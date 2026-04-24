@@ -25,9 +25,6 @@ class CsvTest extends TestCase
         foreach ($files as $file) {
             unlink($file);
         }
-        if (is_dir(self::OUTPUT_DIR)) {
-            rmdir(self::OUTPUT_DIR);
-        }
     }
 
     // Basic CSV Loading

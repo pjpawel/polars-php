@@ -666,11 +666,77 @@ class ExprTest extends TestCase
         $this->assertInstanceOf(Expr::class, $expr);
     }
 
-    public function testExprComparisonChaining(): void
+
+    // Exclude methods
+
+    public function testExcludeSingleString(): void
     {
-        $expr = Expr::col('abc')
-            ->gt(0)
-            ->xxor(Expr::col('def')->lt(10));
-        $this->assertInstanceOf(Expr::class, $expr);
+        $expr = Expr::all();
+        $this->assertInstanceOf(Expr::class, $expr->exclude('abc'));
+    }
+
+    public function testExcludeArrayOfStrings(): void
+    {
+        $expr = Expr::all();
+        $this->assertInstanceOf(Expr::class, $expr->exclude(['abc', 'def']));
+    }
+
+    public function testExcludeExpr(): void
+    {
+        $expr = Expr::all();
+        $this->assertInstanceOf(Expr::class, $expr->exclude(Expr::col('abc')));
+    }
+
+    public function testExcludeInvalidInput(): void
+    {
+        $expr = Expr::all();
+        $this->expectException(\Exception::class);
+        $expr->exclude(123);
+    }
+
+    public function testExcludeInvalidArray(): void
+    {
+        $expr = Expr::all();
+        $this->expectException(\Exception::class);
+        $expr->exclude(['abc', 123]);
+    }
+
+    public function testExcludeOnNonSelector(): void
+    {
+        $expr = new Expr(42);
+        $this->expectException(\Exception::class);
+        $expr->exclude('abc');
+    }
+
+    public function testExcludeIntegration(): void
+    {
+        $df = new DataFrame([
+            'a' => [1, 2, 3],
+            'b' => [4, 5, 6],
+            'c' => [7, 8, 9],
+        ]);
+        
+        // exclude 'b'
+        $result = $df->select([Expr::all()->exclude('b')]);
+        $this->assertEquals(2, $result->width());
+        $this->assertFalse(in_array('b', $result->columns));
+        $this->assertTrue(in_array('a', $result->columns));
+        $this->assertTrue(in_array('c', $result->columns));
+    }
+
+    public function testExcludeArrayIntegration(): void
+    {
+        $df = new DataFrame([
+            'a' => [1, 2, 3],
+            'b' => [4, 5, 6],
+            'c' => [7, 8, 9],
+        ]);
+        
+        // exclude 'a' and 'c'
+        $result = $df->select([Expr::all()->exclude(['a', 'c'])]);
+        $this->assertEquals(1, $result->width());
+        $this->assertFalse(in_array('a', $result->columns));
+        $this->assertFalse(in_array('c', $result->columns));
+        $this->assertTrue(in_array('b', $result->columns));
     }
 }

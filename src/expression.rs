@@ -340,7 +340,7 @@ impl PolarsExpr {
         let target = crate::common::parse_dtype(&dtype)?;
         Ok(self.0.clone().cast(target).into())
     }
-    
+
     #[php(name = "isBetween")]
     pub fn is_between(
         &self,
@@ -355,6 +355,59 @@ impl PolarsExpr {
             .clone()
             .is_between(lower, upper, closed.into())
             .into())
+    }
+
+    /// Exclude specific columns from the expression
+    pub fn exclude(&self, columns: &Zval) -> ExtResult<Self> {
+        let names = match columns.get_type() {
+            DataType::String => {
+                vec![columns.str().unwrap().to_string()]
+            }
+            DataType::Array => {
+                let array = columns.array().unwrap();
+                let mut names = Vec::new();
+
+                for (_, val) in array.iter() {
+                    if val.get_type() == DataType::String {
+                        names.push(val.str().unwrap().to_string());
+                    } else {
+                        return Err(PolarsException::new(
+                            "exclude() with array requires all elements to be strings".to_string(),
+                        ));
+                    }
+                }
+                names
+            }
+            DataType::Object(_) => {
+                let object: &ZendObject = columns.object().unwrap();
+                if !object.is_instance::<PolarsExpr>() {
+                    return Err(PolarsException::new(
+                        "Passed object is not of class Polars\\Expr".to_string(),
+                    ));
+                }
+                let inner_expr = columns.extract::<&PolarsExpr>().unwrap().0.clone();
+                if let Expr::Column(name) = inner_expr {
+                    vec![name.to_string()]
+                } else {
+                    return Err(PolarsException::new(
+                        "exclude() object must be a column expression".to_string(),
+                    ));
+                }
+            }
+            _ => {
+                return Err(PolarsException::new(
+                    "exclude() accepts a string, array of strings, or Polars\\Expr".to_string(),
+                ));
+            }
+        };
+
+        // In polars 0.52, Expr doesn't have .exclude().
+        // Instead, we use the Selector's .exclude_cols() if the original expr can be treated as a selector.
+        if let Some(sel) = self.0.clone().into_selector() {
+            Ok(PolarsExpr(sel.exclude_cols(names).as_expr()))
+        } else {
+            Err(PolarsException::new("exclude() can only be called on expressions that can be treated as selectors (e.g. all(), col())".to_string()))
+        }
     }
 }
 

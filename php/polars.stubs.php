@@ -85,6 +85,14 @@ namespace Polars {
         public function column(string $name): \Polars\Series {}
 
         /**
+         * Get column names
+         * @returns string[]
+         *
+         * @return array
+         */
+        public function columnNames(): array {}
+
+        /**
          * Create a copy of the DataFrame
          *
          * @return \Polars\DataFrame
@@ -1061,6 +1069,14 @@ namespace Polars {
          * @return \Polars\Expr
          */
         public function eqMissing(mixed $other): \Polars\Expr {}
+
+        /**
+         * Exclude specific columns from the expression
+         *
+         * @param mixed $columns
+         * @return \Polars\Expr
+         */
+        public function exclude(mixed $columns): \Polars\Expr {}
 
         /**
          * @return \Polars\Expr
