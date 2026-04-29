@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ## 0.6.0
 
+### Add missing arguments in `LazyFrame` class in methods:
+- `quantile` - add `interpolation` argument
+- `std` and `variance` - change default value from 0 to 1
+
 ### New Expr aggregation methods
 - [Feature] `Expr::approxNUnique()` — Approximate count of unique values
 - [Feature] `Expr::argMax()` — Get the index of the maximum value
