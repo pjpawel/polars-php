@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agent when working with code in this repository.
 
 ## Project Overview
 
@@ -30,6 +30,7 @@ composer all:release
 ```
 
 To run a single test:
+
 ```bash
 php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit tests/SimpleDataFrameTest.php
 php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit --filter testSelect tests/SimpleDataFrameTest.php
@@ -52,6 +53,7 @@ php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit --filter te
 ### Key Patterns
 
 **PHP Class Definition:**
+
 ```rust
 #[php_class]
 #[php(name = "Polars\\ClassName")]
@@ -67,12 +69,14 @@ impl PhpClassName { ... }
 **Zval Conversion:** Convert PHP values to `Polars\Expr` types via `zval_to_expr()` in expression.rs.
 
 **Property Getters:** Use `#[php(getter)]` with `get_` prefix for PHP property-style access:
+
 ```rust
 #[php(getter)]
 pub fn get_name(&self) -> String { ... }  // Accessed as $obj->getName() in PHP
 ```
 
 **Boolean Type Handling:** PHP 8+ has separate `True` and `False` types. When matching PHP types, include all three:
+
 ```rust
 PhpDataType::Bool | PhpDataType::True | PhpDataType::False => { ... }
 ```
@@ -82,9 +86,11 @@ PhpDataType::Bool | PhpDataType::True | PhpDataType::False => { ... }
 **LazyGroupBy storage:** Polars `LazyGroupBy` consumes self on method calls. Store `LazyFrame` + `Vec<Expr>` and reconstruct the `LazyGroupBy` for each operation (same pattern as python-polars bindings).
 
 **PlPath Construction:** `PlPath` is an enum (`PlPath::Local(Arc<Path>)` / `PlPath::Cloud(...)`). It has no `From<String>` or `From<&str>` impl. Construct local paths with:
+
 ```rust
 PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path)))
 ```
+
 Required by `LazyCsvReader::new()`, `LazyJsonLineReader::new()`, `LazyFrame::scan_parquet()`, and `SinkTarget::Path()`.
 
 **LazyCsvReader parse options:** Use `map_parse_options(|opts| opts.with_separator(sep))`, not `with_parse_options()`.
@@ -96,6 +102,7 @@ Generated stub file `php/polars.stubs.php` provides IDE autocompletion. Regenera
 ### PHP Tests (`php/tests/`)
 
 PHPUnit tests validate the extension. Extension is loaded dynamically via `-d extension=` flag.
+Do not add rust tests.
 
 ## Dependencies
 
@@ -111,8 +118,9 @@ Every change to the codebase MUST include all three of the following:
 2. **Tests** — add or update PHPUnit tests in `php/tests/` covering the change
 3. **Changelog** — add an entry to `CHANGELOG.md` describing the change
 4. **Benchmark** - if necessary add benchmark in php/benchmarks
+5. **AGENTS.md** - update AGENTS.md file if there is any structural change to the project
 
-Do not consider a task complete until all three are updated.
+Do not consider a task complete until first three are updated.
 
 Every task must end building extension and run all tests
 
@@ -123,7 +131,7 @@ PHPBench suite comparing polars-php vs pure PHP. All benchmark files live under 
 ### Structure
 
 - **`phpbench.json`**: Runner config — loads the release extension, sets 4G memory limit, enables OPcache CLI
-- **`composer.json`**: *(none — uses `php/composer.json` directly)*
+- **`composer.json`**: _(none — uses `php/composer.json` directly)_
 - **`Fixtures/DataGenerator.php`**: Shared data generation at sizes `[100, 1_000, 10_000, 100_000, 1_000_000]`
 - **`Fixtures/TracksPolarsMemory.php`**: Trait to record `$df->estimatedSize()` per benchmark
 - **`Polars/`**: Eight benchmark classes using the polars-php extension
@@ -182,6 +190,7 @@ Documentation is built using Sphinx with MyST Markdown. Source files:
 - **closedinterval.md**: ClosedInterval enum API reference
 
 Build documentation:
+
 ```bash
 cd doc
 make install  # Install dependencies (first time only)
