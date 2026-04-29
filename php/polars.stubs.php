@@ -1544,9 +1544,10 @@ namespace Polars {
          * @return \Polars\LazyFrame
          *
          * @param float $quantile
+         * @param \Polars\QuantileMethod $interpolation
          * @return \Polars\LazyFrame
          */
-        public function quantile(float $quantile): \Polars\LazyFrame {}
+        public function quantile(float $quantile, \Polars\QuantileMethod $interpolation = PolarsQuantileMethod :: Nearest): \Polars\LazyFrame {}
 
         /**
          * Rename columns
@@ -1669,7 +1670,7 @@ namespace Polars {
          * @param int $ddof
          * @return \Polars\LazyFrame
          */
-        public function std(int $ddof = 0): \Polars\LazyFrame {}
+        public function std(int $ddof = 1): \Polars\LazyFrame {}
 
         /**
          * Aggregate the columns to their sum value
@@ -1706,7 +1707,7 @@ namespace Polars {
          * @param int $ddof
          * @return \Polars\LazyFrame
          */
-        public function variance(int $ddof = 0): \Polars\LazyFrame {}
+        public function variance(int $ddof = 1): \Polars\LazyFrame {}
 
         /**
          * Get number of columns
