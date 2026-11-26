@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 - Bump `ext-php-rs` from 0.15.10 to 0.16.5 (first release line with PHP 8.6 support)
 - Bump `ethnum` 1.5.2 -> 1.5.3 in Cargo.lock (1.5.2 no longer compiles on stable Rust >= 1.97, E0512 in its error.rs)
 - Fix `DataFrame::writeCsv()` default argument name (`includeHeaders` -> `includeHeader`) to match the parameter name, as required by ext-php-rs 0.16
+- Fix remaining ext-php-rs 0.16 incompatibilities: `PhpException::default()` -> `PhpException::from()` in `DataFrame::setColumns()`, non-exhaustive `ArrayKey` matches in `DataFrame`, and `StubLiteral` impl for `Polars\QuantileMethod` enum used as a parameter default
+- Pass `-flax-vector-conversions` via `CFLAGS` on Linux CI: clang >= 21 defaults to C23, which breaks ext-php-rs's wrapper.c compile against clang's own SSE headers
 
 ### Add missing arguments in `LazyFrame` class in methods:
 - `quantile` - add `interpolation` argument

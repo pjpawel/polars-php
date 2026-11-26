@@ -22,10 +22,11 @@ use std::collections::HashMap;
 fn parse_array_to_cols_by_keys(data: &ZendHashTable) -> ExtResult<Vec<Column>> {
     let mut columns = Vec::new();
     for (key, value) in data.iter() {
-        let col_name = match key {
-            ArrayKey::String(s) => s,
+        let col_name = match &key {
+            ArrayKey::String(s) => s.clone(),
             ArrayKey::Str(s) => s.to_string(),
             ArrayKey::Long(i) => i.to_string(),
+            _ => key.to_string(),
         };
 
         let arr: &ZendHashTable = match value.array() {
@@ -305,7 +306,7 @@ impl PhpDataFrame {
     pub fn set_columns(&mut self, columns: Vec<String>) {
         let str_refs: Vec<&str> = columns.iter().map(|s| s.as_str()).collect();
         if let Err(e) = self.inner.set_column_names(str_refs) {
-            ext_php_rs::exception::PhpException::default(format!(
+            ext_php_rs::exception::PhpException::from(format!(
                 "Failed to set DataFrame column names: {}",
                 e
             ))
@@ -1277,10 +1278,11 @@ impl PhpDataFrame {
     pub fn cast(&self, dtypes: &ZendHashTable, strict: bool) -> ExtResult<Self> {
         let mut exprs: Vec<Expr> = Vec::new();
         for (key, value) in dtypes.iter() {
-            let col_name = match key {
-                ArrayKey::String(s) => s,
+            let col_name = match &key {
+                ArrayKey::String(s) => s.clone(),
                 ArrayKey::Str(s) => s.to_string(),
                 ArrayKey::Long(i) => i.to_string(),
+                _ => key.to_string(),
             };
             let dtype_str = value.string().ok_or_else(|| {
                 PolarsException::new(format!(
