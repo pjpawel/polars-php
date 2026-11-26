@@ -601,7 +601,7 @@ impl PhpDataFrame {
     }
 
     /// Write to CSV file
-    #[php(defaults(includeHeaders = true, separator = ','.to_string()))]
+    #[php(defaults(includeHeader = true, separator = ','.to_string()))]
     pub fn write_csv(&self, path: String, includeHeader: bool, separator: String) -> ExtResult<()> {
         if separator.len() != 1 {
             return Err(PolarsException::new(

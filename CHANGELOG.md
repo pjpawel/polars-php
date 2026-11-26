@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ## 0.6.0
 
+### PHP 8.6 support
+- Build and test the extension for PHP 8.6 in CI (Linux and macOS)
+- Bump `ext-php-rs` from 0.15.10 to 0.16.5 (first release line with PHP 8.6 support)
+- Fix `DataFrame::writeCsv()` default argument name (`includeHeaders` -> `includeHeader`) to match the parameter name, as required by ext-php-rs 0.16
+
 ### Add missing arguments in `LazyFrame` class in methods:
 - `quantile` - add `interpolation` argument
 - `std` and `variance` - change default value from 0 to 1
