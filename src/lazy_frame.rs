@@ -9,7 +9,7 @@ use crate::expression::PolarsQuantileMethod;
 use crate::lazy_group_by::PhpLazyGroupBy;
 use ext_php_rs::prelude::*;
 use ext_php_rs::types::{ZendHashTable, Zval};
-use polars::prelude::{Expr, JoinArgs, JoinType, LazyCsvReader, LazyFileListReader, LazyFrame, LazyJsonLineReader, LiteralValue, PlPath, ScanArgsParquet, Selector, SortMultipleOptions, UniqueKeepStrategy, Scalar};
+use polars::prelude::{Expr, JoinArgs, JoinType, LazyCsvReader, LazyFileListReader, LazyFrame, LazyJsonLineReader, LiteralValue, PlRefPath, ScanArgsParquet, Selector, SortMultipleOptions, UniqueKeepStrategy, Scalar};
 
 #[php_class]
 #[php(name = "Polars\\LazyFrame")]
@@ -32,9 +32,7 @@ impl PhpLazyFrame {
             ));
         }
         let sep = separator.as_bytes()[0];
-        let lf = LazyCsvReader::new(PlPath::Local(std::sync::Arc::from(std::path::Path::new(
-            &path,
-        ))))
+        let lf = LazyCsvReader::new(PlRefPath::from(path.as_str()))
         .with_has_header(hasHeader)
         .map_parse_options(|opts| opts.with_separator(sep))
         .finish()
@@ -44,9 +42,7 @@ impl PhpLazyFrame {
 
     /// Scan a NDJSON file into a LazyFrame
     pub fn scan_ndjson(path: String) -> ExtResult<Self> {
-        let lf = LazyJsonLineReader::new(PlPath::Local(std::sync::Arc::from(
-            std::path::Path::new(&path),
-        )))
+        let lf = LazyJsonLineReader::new(PlRefPath::from(path.as_str()))
         .finish()
         .map_err(|e| PolarsException::new(format!("Failed to scan NDJSON: {}", e)))?;
         Ok(Self { inner: lf })
@@ -55,7 +51,7 @@ impl PhpLazyFrame {
     /// Scan a Parquet file into a LazyFrame
     pub fn scan_parquet(path: String) -> ExtResult<Self> {
         let lf = LazyFrame::scan_parquet(
-            PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path))),
+            PlRefPath::from(path.as_str()),
             ScanArgsParquet::default(),
         )
         .map_err(|e| PolarsException::new(format!("Failed to scan Parquet: {}", e)))?;
@@ -500,7 +496,10 @@ impl PhpLazyFrame {
         includeHeader: bool,
         separator: String,
     ) -> ExtResult<PhpDataFrame> {
-        use polars::prelude::{CsvWriterOptions, SerializeOptions, SinkOptions, SinkTarget};
+        use polars::prelude::{
+            CsvWriterOptions, FileWriteFormat, SerializeOptions, SinkDestination, SinkTarget,
+            UnifiedSinkArgs,
+        };
 
         if separator.len() != 1 {
             return Err(PolarsException::new(
@@ -508,21 +507,21 @@ impl PhpLazyFrame {
             ));
         }
         let sep = separator.as_bytes()[0];
-        let target = SinkTarget::Path(PlPath::Local(std::sync::Arc::from(std::path::Path::new(
-            &path,
-        ))));
+        let target = SinkDestination::File {
+            target: SinkTarget::Path(PlRefPath::from(path.as_str())),
+        };
         let options = CsvWriterOptions {
             include_header: includeHeader,
-            serialize_options: SerializeOptions {
+            serialize_options: std::sync::Arc::new(SerializeOptions {
                 separator: sep,
                 ..Default::default()
-            },
+            }),
             ..Default::default()
         };
         let df = self
             .inner
             .clone()
-            .sink_csv(target, options, None, SinkOptions::default())
+            .sink(target, FileWriteFormat::Csv(options), UnifiedSinkArgs::default())
             .map_err(|e| PolarsException::new(format!("Failed to sink CSV: {}", e)))?
             .collect()
             .map_err(|e| {
@@ -534,19 +533,20 @@ impl PhpLazyFrame {
     /// Sink the LazyFrame to a Parquet file and return the result as a DataFrame
     /// @return \Polars\DataFrame
     pub fn sink_parquet(&self, path: String) -> ExtResult<PhpDataFrame> {
-        use polars::prelude::{ParquetWriteOptions, SinkOptions, SinkTarget};
+        use polars::prelude::{
+            FileWriteFormat, ParquetWriteOptions, SinkDestination, SinkTarget, UnifiedSinkArgs,
+        };
 
-        let target = SinkTarget::Path(PlPath::Local(std::sync::Arc::from(std::path::Path::new(
-            &path,
-        ))));
+        let target = SinkDestination::File {
+            target: SinkTarget::Path(PlRefPath::from(path.as_str())),
+        };
         let df = self
             .inner
             .clone()
-            .sink_parquet(
+            .sink(
                 target,
-                ParquetWriteOptions::default(),
-                None,
-                SinkOptions::default(),
+                FileWriteFormat::Parquet(std::sync::Arc::new(ParquetWriteOptions::default())),
+                UnifiedSinkArgs::default(),
             )
             .map_err(|e| PolarsException::new(format!("Failed to sink Parquet: {}", e)))?
             .collect()
@@ -559,19 +559,20 @@ impl PhpLazyFrame {
     /// Sink the LazyFrame to a NDJSON file and return the result as a DataFrame
     /// @return \Polars\DataFrame
     pub fn sink_ndjson(&self, path: String) -> ExtResult<PhpDataFrame> {
-        use polars::prelude::{JsonWriterOptions, SinkOptions, SinkTarget};
+        use polars::prelude::{
+            FileWriteFormat, NDJsonWriterOptions, SinkDestination, SinkTarget, UnifiedSinkArgs,
+        };
 
-        let target = SinkTarget::Path(PlPath::Local(std::sync::Arc::from(std::path::Path::new(
-            &path,
-        ))));
+        let target = SinkDestination::File {
+            target: SinkTarget::Path(PlRefPath::from(path.as_str())),
+        };
         let df = self
             .inner
             .clone()
-            .sink_json(
+            .sink(
                 target,
-                JsonWriterOptions::default(),
-                None,
-                SinkOptions::default(),
+                FileWriteFormat::NDJson(NDJsonWriterOptions::default()),
+                UnifiedSinkArgs::default(),
             )
             .map_err(|e| PolarsException::new(format!("Failed to sink NDJSON: {}", e)))?
             .collect()

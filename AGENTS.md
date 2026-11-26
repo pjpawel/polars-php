@@ -81,19 +81,37 @@ pub fn get_name(&self) -> String { ... }  // Accessed as $obj->getName() in PHP
 PhpDataType::Bool | PhpDataType::True | PhpDataType::False => { ... }
 ```
 
-**Selector vs Expr:** In Polars 0.52, `polars_plan::dsl::all()` returns `Selector`, not `Expr`. Use `.as_expr()` or `Expr::from(all())` to convert. Methods like `drop()`, `unique()`, `drop_nulls()` on `LazyFrame` take `Selector` type (use `Selector::ByName { names, strict }` for column name lists).
+**Selector vs Expr:** In Polars 0.55, `polars_plan::dsl::all()` returns `Selector`, not `Expr`. Use `.as_expr()` or `Expr::from(all())` to convert. Methods like `drop()`, `unique()`, `drop_nulls()` on `LazyFrame` take `Selector` type (use `Selector::ByName { names, strict }` for column name lists). `UnpivotArgsDSL.on` is `Option<Selector>` (index stays `Selector`). `LazyFrame::explode` takes `(Selector, ExplodeOptions)` — construct `ExplodeOptions { empty_as_null: true, keep_nulls: true }` explicitly (no `Default`).
 
 **LazyGroupBy storage:** Polars `LazyGroupBy` consumes self on method calls. Store `LazyFrame` + `Vec<Expr>` and reconstruct the `LazyGroupBy` for each operation (same pattern as python-polars bindings).
 
-**PlPath Construction:** `PlPath` is an enum (`PlPath::Local(Arc<Path>)` / `PlPath::Cloud(...)`). It has no `From<String>` or `From<&str>` impl. Construct local paths with:
+**PlRefPath Construction:** In Polars 0.55, `PlPath` is no longer an enum; use `PlRefPath` (exported from `polars::prelude`), which implements `From<&str>`:
 
 ```rust
-PlPath::Local(std::sync::Arc::from(std::path::Path::new(&path)))
+PlRefPath::from(path.as_str())
 ```
 
 Required by `LazyCsvReader::new()`, `LazyJsonLineReader::new()`, `LazyFrame::scan_parquet()`, and `SinkTarget::Path()`.
 
 **LazyCsvReader parse options:** Use `map_parse_options(|opts| opts.with_separator(sep))`, not `with_parse_options()`.
+
+**DataFrame construction:** `DataFrame::new()` now takes `(height, columns)` — use `DataFrame::new_infer_height(columns)` instead. `get_columns()` was renamed to `columns()` (returns `&[Column]`); `DataFrame::is_empty()` was removed — use `height() == 0`.
+
+**LazyFrame sinks:** `sink_csv`/`sink_parquet`/`sink_json` were removed. Use the unified API:
+
+```rust
+lf.sink(
+    SinkDestination::File { target: SinkTarget::Path(PlRefPath::from(path.as_str())) },
+    FileWriteFormat::Csv(csv_writer_options),        // or Parquet(Arc<ParquetWriteOptions>), NDJson(NDJsonWriterOptions)
+    UnifiedSinkArgs::default(),
+)?.collect()?
+```
+
+`CsvWriterOptions.serialize_options` is `Arc<SerializeOptions>` — wrap with `Arc::new(...)`. `JsonWriterOptions` is now `NDJsonWriterOptions`.
+
+**Pivot:** The eager `pivot_stable` is gone; pivot is lazy-only: `LazyFrame::pivot(on: Selector, on_columns: Arc<DataFrame>, index: Selector, values: Selector, agg: Expr, maintain_order: bool, separator: PlSmallStr, column_naming: PivotColumnNaming)`. Compute `on_columns` yourself (distinct `on` values, optionally sorted), and build `agg` from `element()` (e.g. `element().sum()`) or `len()` — explicit `col(...)` references are rejected.
+
+**Misc 0.55 changes:** `LazyFrame::merge_sorted` takes `(other, key: impl IntoIterator<Item = impl Into<PlSmallStr>>, maintain_order: bool)`; `sample_n`/`sample_frac` take `shuffle: Option<bool>`; `Expr::implode`/`Expr::mode` and `polars_ops::chunked_array::mode::mode` take a `maintain_order: bool`.
 
 ### PHP Stubs
 

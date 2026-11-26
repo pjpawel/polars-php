@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 
 ## 0.6.0
 
+### Internal
+- [Chore] Upgrade underlying `polars`/`polars-ops` from 0.52.0 to 0.55.2 (also bumps `ethnum` to 1.5.3 for rustc compatibility). Adapted internal bindings to the 0.55 API (`PlRefPath`, new `LazyFrame::sink` API, `DataFrame::new_infer_height`, `columns()`, lazy `pivot`, `ExplodeOptions`, `Option<bool>` shuffle in `sample_*`); the PHP-facing API is unchanged.
+
 ### Add missing arguments in `LazyFrame` class in methods:
 - `quantile` - add `interpolation` argument
 - `std` and `variance` - change default value from 0 to 1
