@@ -77,6 +77,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev clang
           echo "CFLAGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-flax-vector-conversions" >> $GITHUB_ENV
 
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
@@ -163,6 +164,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev clang
           echo "CFLAGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-flax-vector-conversions" >> $GITHUB_ENV
 
       - name: Install cargo-php tool
         run: |

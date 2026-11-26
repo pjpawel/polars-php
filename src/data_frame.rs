@@ -310,8 +310,7 @@ impl PhpDataFrame {
                 "Failed to set DataFrame column names: {}",
                 e
             ))
-            .throw()
-            .ok();
+            .throw();
         }
     }
 
