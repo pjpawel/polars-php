@@ -15,6 +15,9 @@ jobs:
   build:
     name: Build - ${{ matrix.os }} - PHP ${{ matrix.php }}
     runs-on: ${{ matrix.os }}
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
 
     strategy:
       fail-fast: false
@@ -51,6 +54,9 @@ jobs:
         with:
           toolchain: ${{ matrix.rust-toolchain }}
           targets: ${{ matrix.rust-target }}
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo
         uses: actions/cache@v5
@@ -175,6 +181,11 @@ jobs:
   pie-build:
     name: PIE build - ubuntu-latest - PHP 8.4
     runs-on: ubuntu-latest
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
+      CARGO_PROFILE_RELEASE_LTO: "false"
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
 
     steps:
       - name: Checkout code
@@ -190,6 +201,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo
         uses: actions/cache@v5
@@ -234,6 +248,9 @@ jobs:
     name: Generate PHP Stubs
     runs-on: ubuntu-latest
     needs: build
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
 
     steps:
       - name: Checkout code
@@ -247,6 +264,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo
         uses: actions/cache@v5
