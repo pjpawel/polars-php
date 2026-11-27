@@ -22,8 +22,10 @@ if test "$PHP_POLARS" != "no"; then
     AC_MSG_ERROR([rustc not found in PATH. Install the Rust toolchain (https://rustup.rs) to build the polars extension.])
   fi
 
-  dnl When invoked through rustup, prefer the real toolchain binaries so the
-  dnl build also works where the shims need extra environment setup.
+  dnl When invoked through rustup, prefer the real toolchain binaries:
+  dnl Makefile.frag passes RUSTC to cargo so it never spawns the rustup
+  dnl rustc shims, which can race each other on channel syncs when cargo
+  dnl builds with -j.
   AC_PATH_PROG([RUSTUP], [rustup], [])
   if test -n "$RUSTUP"; then
     CARGO_REAL=`$RUSTUP which cargo 2>/dev/null`

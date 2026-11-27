@@ -13,13 +13,14 @@ POLARS_DYLIB_DYLIB = $(POLARS_RUST_DIR)/target/$(POLARS_PROFILE)/libpolars_php.d
 POLARS_MODULE      = $(top_builddir)/modules/polars.so
 
 CARGO ?= cargo
+RUSTC ?= rustc
 
 # Without C sources the default `all` target of the phpize Makefile is a
 # no-op, so make it depend on the cargo build below.
 all: build-modules
 
 build-modules:
-	cd "$(POLARS_RUST_DIR)" && $(CARGO) build --$(POLARS_PROFILE)
+	cd "$(POLARS_RUST_DIR)" && RUSTC="$(RUSTC)" $(CARGO) build --$(POLARS_PROFILE)
 	@mkdir -p $(top_builddir)/modules
 	@if [ -f "$(POLARS_DYLIB_SO)" ]; then \
 		cp -f "$(POLARS_DYLIB_SO)" "$(POLARS_MODULE)"; \
