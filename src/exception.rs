@@ -26,7 +26,7 @@ impl From<PolarsError> for PolarsException {
 
 impl From<PolarsException> for PhpException {
     fn from(polars_exception: PolarsException) -> PhpException {
-        PhpException::default(polars_exception.0)
+        PhpException::from(polars_exception.0)
     }
 }
 

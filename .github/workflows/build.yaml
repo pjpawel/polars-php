@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest] # /, windows-latest
-        php: ['8.3', '8.4', '8.5']
+        php: ['8.3', '8.4', '8.5', '8.6']
         include:
           - os: ubuntu-latest
             extension: so
@@ -76,6 +76,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev clang
+          echo "CFLAGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "LIBCLANG_PATH=$(llvm-config --libdir)" >> $GITHUB_ENV
 
       - name: Install LLVM (macOS)
         if: runner.os == 'macOS'
@@ -161,6 +164,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y llvm-dev libclang-dev clang
+          echo "CFLAGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "LIBCLANG_PATH=$(llvm-config --libdir)" >> $GITHUB_ENV
 
       - name: Install cargo-php tool
         run: |
@@ -234,7 +240,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest] # , windows-latest
-        php: ['8.3', '8.4', '8.5']
+        php: ['8.3', '8.4', '8.5', '8.6']
 
     steps:
       - name: Checkout code
