@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Windows support
 - Build and test the extension on Windows (`windows-latest`, `x86_64-pc-windows-msvc`) in CI for PHP 8.3-8.6; release artifacts now include `*-Windows.dll`
 - Enable the previously commented-out Windows entries in the build/test matrices of `.github/workflows/build.yaml` (nightly Rust toolchain on Windows, required for the `abi_vectorcall` ABI enabled in `src/lib.rs`; `rust-lld` linker and `+crt-static` were already configured for Windows)
-- CI `test` job now installs composer dependencies and runs the full PHPUnit suite against the built extension on every OS (previously only `php -d extension=... -m`)
+- CI `test` job now runs the full PHPUnit suite against the built extension on every OS, not just a `php -m` smoke test. It uses the self-contained `phpunit-12.phar` instead of `composer install`, because `php/composer.lock` pins `symfony/*` v8 (via phpbench) which requires PHP >= 8.4 and breaks `composer install` on the PHP 8.3 jobs
 - Document Windows requirements and build steps in `README.md` and `doc/index.md`
 
 ### Internal

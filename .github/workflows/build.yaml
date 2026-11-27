@@ -250,7 +250,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          tools: composer
 
       - name: Download extension artifact
         uses: actions/download-artifact@v5
@@ -265,9 +264,12 @@ jobs:
           echo "Testing extension: $EXT_FILE"
           php -d extension="$EXT_FILE" -m
 
+          # Use the self-contained PHPUnit phar instead of `composer install`:
+          # php/composer.lock pins symfony/* v8 (via phpbench), which requires
+          # PHP >= 8.4, so composer install fails on the PHP 8.3 jobs.
           cd php
-          composer install --no-interaction
-          php -d extension="$EXT_FILE" vendor/bin/phpunit tests
+          curl -sSL -o phpunit.phar https://phar.phpunit.de/phpunit-12.phar
+          php -d extension="$EXT_FILE" phpunit.phar tests
 
   benchmark:
     name: Run Benchmarks
