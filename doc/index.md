@@ -18,7 +18,7 @@ pie install pjpawel/polars-php
 PIE builds the extension from source with `cargo` through the `phpize` / `./configure` / `make` flow (see `pie/` in the repository) and enables `extension=polars` in `php.ini`. Requires PHP 8.3+, the Rust toolchain, and `phpize`.
 
 ### Pre-built Binaries
-Pre-built binaries are available for Linux and macOS.
+Pre-built binaries are available for Linux, macOS and Windows.
 There were compiled for PHP 8.3, 8.4, 8.5 and 8.6.
 Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
 
@@ -32,8 +32,12 @@ cd polars-php/php
 # Build the extension
 composer build:relese
 
-# Verify installation
+# Verify installation (Linux/macOS)
 php -d extension=../target/release/libpolars_php.so -m | grep polars
+
+# On Windows the extension is a DLL built with the nightly Rust toolchain:
+# cargo +nightly build --release
+php -d extension=..\target\release\polars_php.dll -m
 ```
 
 ## Quick Example
@@ -78,7 +82,7 @@ quantilemethod
 ## Requirements
 
 - PHP 8.3+
-- Linux or macOS (Windows not currently supported)
+- Linux, macOS or Windows (on Windows use the nightly Rust toolchain)
 - Rust toolchain (for building from source)
 
 ## License

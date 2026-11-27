@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 
 ## 0.6.0
 
+### Windows support
+- Build and test the extension on Windows (`windows-latest`, `x86_64-pc-windows-msvc`) in CI for PHP 8.3-8.6; release artifacts now include `*-Windows.dll`
+- Enable the previously commented-out Windows entries in the build/test matrices of `.github/workflows/build.yaml` (nightly Rust toolchain on Windows, required for the `abi_vectorcall` ABI enabled in `src/lib.rs`; `rust-lld` linker and `+crt-static` were already configured for Windows)
+- CI `test` job now runs the full PHPUnit suite against the built extension on every OS, not just a `php -m` smoke test. It uses the self-contained `phpunit-12.phar` instead of `composer install`, because `php/composer.lock` pins `symfony/*` v8 (via phpbench) which requires PHP >= 8.4 and breaks `composer install` on the PHP 8.3 jobs
+- Document Windows requirements and build steps in `README.md` and `doc/index.md`
+
 ### Internal
 - [Chore] Upgrade underlying `polars`/`polars-ops` from 0.52.0 to 0.55.2 (also bumps `ethnum` to 1.5.3 for rustc compatibility). Adapted internal bindings to the 0.55 API (`PlRefPath`, new `LazyFrame::sink` API, `DataFrame::new_infer_height`, `columns()`, lazy `pivot`, `ExplodeOptions`, `Option<bool>` shuffle in `sample_*`); the PHP-facing API is unchanged.
 

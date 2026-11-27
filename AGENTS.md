@@ -36,6 +36,12 @@ php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit tests/Simpl
 php -d extension=../target/debug/libpolars_php.so vendor/bin/phpunit --filter testSelect tests/SimpleDataFrameTest.php
 ```
 
+## Platform Support
+
+- **Linux/macOS**: build with the stable toolchain; the extension is produced as `target/<profile>/libpolars_php.so` (Linux) or `libpolars_php.dylib` (macOS). The composer scripts above hardcode the `.so` path and are meant for Linux/macOS.
+- **Windows**: build with the **nightly** toolchain (`cargo +nightly build`) — `src/lib.rs` enables the unstable `abi_vectorcall` feature on Windows. The extension is produced as `target/<profile>/polars_php.dll`. `.cargo/config.toml` already selects the `rust-lld` linker for `*-pc-windows-msvc` targets and disables `dynamic_lookup` there (not needed/possible on Windows; the build links against `php8.lib`/`php8ts.lib` from the PHP devel pack, which ext-php-rs downloads automatically based on the `php` binary in `PATH`). LLVM must be installed for libclang (bindgen). On Windows, pass the DLL directly, e.g. from `php/`: `php -d extension=../target/debug/polars_php.dll vendor/bin/phpunit tests`.
+- CI (`.github/workflows/build.yaml`) builds and tests ubuntu/macos/windows for PHP 8.3-8.6; Windows uses the nightly toolchain and `+crt-static`.
+
 ## Architecture
 
 ### Rust Source (`src/`)
