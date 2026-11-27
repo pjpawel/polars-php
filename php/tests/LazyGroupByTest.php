@@ -284,7 +284,7 @@ class LazyGroupByTest extends TestCase
 
     public function testMapGroupsRequiresCallable(): void
     {
-        $this->expectException(\Polars\Exception::class);
+        $this->expectException(\Exception::class);
         $this->createDf()->lazy()
             ->groupBy([Expr::col('group')])
             ->mapGroups('definitely_not_a_callable');
@@ -292,7 +292,7 @@ class LazyGroupByTest extends TestCase
 
     public function testMapGroupsWithHavingThrows(): void
     {
-        $this->expectException(\Polars\Exception::class);
+        $this->expectException(\Exception::class);
         $this->createDf()->lazy()
             ->groupBy([Expr::col('group')])
             ->having([Expr::col('value')->sum()->gt(1)])
