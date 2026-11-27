@@ -74,6 +74,21 @@ $df->min();
 
 ## Installation
 
+### Install with PIE (Packagist)
+The extension is published as a [PIE](https://github.com/php/pie) package on Packagist:
+
+```bash
+pie install pjpawel/polars-php
+```
+
+PIE downloads the source distribution and runs the standard `phpize` / `./configure` / `make` / `make install` flow. The actual compilation is delegated to `cargo` (see `pie/config.m4` and `pie/Makefile.frag`), so the [Rust toolchain](https://rustup.rs) and the PHP development files (`phpize`) must be installed. When finished, the extension is enabled as `extension=polars` in your `php.ini`.
+
+Verify with:
+
+```bash
+php -m | grep polars
+```
+
 ### Pre-built Binaries
 Pre-built binaries are available for Linux and macOS.
 There were compiled for PHP 8.3, 8.4, 8.5 and 8.6.

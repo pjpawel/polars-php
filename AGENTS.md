@@ -128,6 +128,17 @@ Do not add rust tests.
 - **polars**: DataFrame library (with lazy, csv, parquet, json, round_series, product, mode, is_between, timezones features)
 - **polars-plan**: Expression DSL (mode, is_between features provided via polars umbrella crate)
 
+## PIE / Packagist Packaging
+
+The extension is distributed as a PIE package (`pjpawel/polars-php`, `type: php-ext`, provides `ext-polars`):
+
+- Root `composer.json` declares the `php-ext` section: `extension-name: polars` (the module is registered as `polars` in `src/lib.rs` via `ModuleBuilder::name("polars")`, matching `extension_name` in `Cargo.toml`), `build-path: pie`, and `os-families-exclude: ["windows"]` (no Windows binaries yet)
+- `pie/config.m4` + `pie/Makefile.frag` bridge PIE's `phpize` / `./configure` / `make` / `make install` flow to `cargo build --release` in the repo root; the cdylib (`target/release/libpolars_php.so`, `.dylib` on macOS) is copied to `pie/modules/polars.so`, which the stock `install-modules` target installs as `polars.so`
+- `.gitattributes` uses `export-ignore` so the Packagist/PIE source archive contains only build inputs (Cargo files, `src/`, `.cargo/`, `pie/`, README, LICENSE)
+- `php/composer.json` remains the dev/test manifest (PHPUnit, PHPBench) and is not the Packagist package
+- CI job `pie-build` in `.github/workflows/build.yaml` verifies `pie build pjpawel/polars-php:*@dev` via a path repository
+- To test locally before publishing to Packagist: `pie repository:add path .` then `pie build pjpawel/polars-php:*@dev`
+
 ## Change Requirements
 
 Every change to the codebase MUST include all three of the following:

@@ -131,6 +131,63 @@ jobs:
           path: ${{ env.ARTIFACT_NAME }}
           retention-days: 30
 
+  pie-build:
+    name: PIE build - ubuntu-latest - PHP 8.4
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: none
+          tools: none
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-php8.4-pie-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php8.4-pie-cargo-
+
+      - name: Install LLVM
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-dev libclang-dev clang
+          echo "CFLAGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "BINDGEN_EXTRA_CLANG_ARGS=-flax-vector-conversions" >> $GITHUB_ENV
+          echo "LIBCLANG_PATH=$(llvm-config --libdir)" >> $GITHUB_ENV
+
+      - name: Download PIE
+        run: curl -fL --output pie.phar https://github.com/php/pie/releases/latest/download/pie.phar
+
+      - name: Register this repository as a PIE path repository
+        run: php pie.phar repository:add path .
+
+      - name: Build the extension with PIE
+        run: php pie.phar build 'pjpawel/polars-php:*@dev'
+
+      - name: Verify the PIE-built extension loads
+        shell: bash
+        run: |
+          SO=$(find ~/.config/pie "$GITHUB_WORKSPACE" -name 'polars.so' -path '*modules*' 2>/dev/null | head -n 1)
+          echo "PIE-built extension: $SO"
+          test -n "$SO"
+          php -d extension="$SO" -m | grep -i polars
+          php -d extension="$SO" -r 'var_dump(extension_loaded("polars"));'
+
   generate-stubs:
     name: Generate PHP Stubs
     runs-on: ubuntu-latest
