@@ -43,6 +43,14 @@ All notable changes to this project will be documented in this file.
 - [Feature] Add `Polars\QuantileMethod` enum for quantile interpolation
 - [Feature] Add `Polars\Expr::exclude()` method to exclude columns from multi-column expressions.
 
+### New LazyGroupBy methods
+- [Feature] `LazyGroupBy::all()` — Aggregate all values of each group into lists
+- [Feature] `LazyGroupBy::having(array $predicates)` — Filter groups with predicates evaluated after aggregation; returns a new `LazyGroupBy` so it can be chained before `agg()`
+- [Feature] `LazyGroupBy::len(?string $name = null)` — Number of rows in each group, optionally renaming the resulting column
+- [Feature] `LazyGroupBy::mapGroups(callable $function, ?array $schema = null)` — Apply a PHP callable over each group as a new DataFrame; `$schema` maps column names to dtypes (name strings or `Polars\DataType`), defaults to the input schema
+- [Feature] `LazyGroupBy::nUnique()` — Count the unique values per group
+- [Feature] `LazyGroupBy::quantile($quantile, QuantileMethod $interpolation = QuantileMethod::Nearest)` — Compute the quantile per group
+
 ### PIE / Packagist distribution
 - [Feature] The extension can now be installed with [PIE](https://github.com/php/pie) from Packagist: `pie install pjpawel/polars-php` (package `pjpawel/polars-php`, `type: php-ext`, provides `ext-polars`)
 - Root `composer.json` with the `php-ext` section (`extension-name: polars`, `build-path: pie`, Windows excluded until pre-built binaries exist); `.gitattributes` `export-ignore` keeps the source archive limited to build inputs

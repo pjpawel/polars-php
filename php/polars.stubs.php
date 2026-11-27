@@ -1742,6 +1742,14 @@ namespace Polars {
         public function __construct() {}
 
         /**
+         * Aggregate all values of each group into lists
+         * @return \Polars\LazyFrame
+         *
+         * @return \Polars\LazyFrame
+         */
+        public function all(): \Polars\LazyFrame {}
+
+        /**
          * Aggregate using expressions
          * @param \Polars\Expr[] $expressions
          * @return \Polars\LazyFrame
@@ -1768,6 +1776,16 @@ namespace Polars {
         public function first(): \Polars\LazyFrame {}
 
         /**
+         * Filter groups with predicates evaluated on the aggregated groups; can be chained
+         * @param \Polars\Expr[] $predicates
+         * @return \Polars\LazyGroupBy
+         *
+         * @param array $predicates
+         * @return \Polars\LazyGroupBy
+         */
+        public function having(array $predicates): \Polars\LazyGroupBy {}
+
+        /**
          * First n rows per group
          * @return \Polars\LazyFrame
          *
@@ -1783,6 +1801,29 @@ namespace Polars {
          * @return \Polars\LazyFrame
          */
         public function last(): \Polars\LazyFrame {}
+
+        /**
+         * Return the number of rows in each group
+         * @param string|null $name Assign a name to the resulting column; if unset, defaults to "len"
+         * @return \Polars\LazyFrame
+         *
+         * @param string|null $name
+         * @return \Polars\LazyFrame
+         */
+        public function len(?string $name = null): \Polars\LazyFrame {}
+
+        /**
+         * Apply a custom function over each group as a new DataFrame
+         * @param callable $function Function that receives a \Polars\DataFrame per group and must return a \Polars\DataFrame
+         * @param array<string, string|\Polars\DataType>|null $schema Output schema; if null the input schema is assumed unchanged
+         * @return \Polars\LazyFrame
+         * @throws Polars\Exception
+         *
+         * @param mixed $function
+         * @param array|null $schema
+         * @return \Polars\LazyFrame
+         */
+        public function mapGroups(mixed $function, ?array $schema = null): \Polars\LazyFrame {}
 
         /**
          * Max per group
@@ -1815,6 +1856,26 @@ namespace Polars {
          * @return \Polars\LazyFrame
          */
         public function min(): \Polars\LazyFrame {}
+
+        /**
+         * Count the unique values per group
+         * @return \Polars\LazyFrame
+         *
+         * @return \Polars\LazyFrame
+         */
+        public function nUnique(): \Polars\LazyFrame {}
+
+        /**
+         * Compute the quantile per group
+         * @param int|float|string|bool|null|\Polars\Expr $quantile Quantile value (0.0 to 1.0)
+         * @return \Polars\LazyFrame
+         * @throws Polars\Exception
+         *
+         * @param mixed $quantile
+         * @param \Polars\QuantileMethod $interpolation
+         * @return \Polars\LazyFrame
+         */
+        public function quantile(mixed $quantile, \Polars\QuantileMethod $interpolation = PolarsQuantileMethod :: Nearest): \Polars\LazyFrame {}
 
         /**
          * Sum per group
