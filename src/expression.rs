@@ -157,7 +157,7 @@ impl PolarsExpr {
     }
 
     pub fn implode(&self) -> Self {
-        self.0.clone().implode().into()
+        self.0.clone().implode(true).into()
     }
 
     #[php(defaults(fisher = true, bias = true))]
@@ -166,7 +166,7 @@ impl PolarsExpr {
     }
 
     pub fn mode(&self) -> Self {
-        self.0.clone().mode().into()
+        self.0.clone().mode(true).into()
     }
 
     #[php(defaults(bias = true))]

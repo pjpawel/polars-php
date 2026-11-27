@@ -384,7 +384,7 @@ impl PhpSeries {
 
     /// Get the mode (most common value(s))
     pub fn mode(&self) -> ExtResult<Self> {
-        let series = polars_ops::chunked_array::mode::mode(&self.inner)
+        let series = polars_ops::chunked_array::mode::mode(&self.inner, true)
             .map_err(|e| PolarsException::new(format!("Cannot compute mode: {}", e)))?;
         Ok(Self { inner: series })
     }

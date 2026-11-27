@@ -122,7 +122,7 @@ impl PhpDataFrame {
                 }
             },
         };
-        let df = DataFrame::new(col_vec)
+        let df = DataFrame::new_infer_height(col_vec)
             .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
         Ok(Self { inner: df })
     }
@@ -179,7 +179,7 @@ impl PhpDataFrame {
             let col = self.inner.column(&col_name).map_err(|e| {
                 PolarsException::new(format!("Column '{}' not found: {}", col_name, e))
             })?;
-            let df = DataFrame::new(vec![col.clone()])
+            let df = DataFrame::new_infer_height(vec![col.clone()])
                 .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
             return Ok(Self { inner: df });
         }
@@ -227,7 +227,7 @@ impl PhpDataFrame {
                 .collect();
 
             let cols = cols.map_err(PolarsException::new)?;
-            let mut df = DataFrame::new(cols)
+            let mut df = DataFrame::new_infer_height(cols)
                 .map_err(|e| PolarsException::new(format!("Failed to create DataFrame: {}", e)))?;
 
             // If row index is provided, slice to that row
@@ -305,7 +305,7 @@ impl PhpDataFrame {
     #[php(setter)]
     pub fn set_columns(&mut self, columns: Vec<String>) {
         let str_refs: Vec<&str> = columns.iter().map(|s| s.as_str()).collect();
-        if let Err(e) = self.inner.set_column_names(str_refs) {
+        if let Err(e) = self.inner.set_column_names(&str_refs) {
             ext_php_rs::exception::PhpException::from(format!(
                 "Failed to set DataFrame column names: {}",
                 e
@@ -494,7 +494,7 @@ impl PhpDataFrame {
 
         let col = self
             .inner
-            .get_columns()
+            .columns()
             .first()
             .ok_or_else(|| PolarsException::new("Failed to get column".to_string()))?;
 
@@ -520,7 +520,7 @@ impl PhpDataFrame {
     #[php(name = "getSeries")]
     pub fn get_series(&self) -> Vec<PhpSeries> {
         self.inner
-            .get_columns()
+            .columns()
             .iter()
             .map(|c| PhpSeries::from(c.clone().take_materialized_series()))
             .collect()
@@ -528,7 +528,7 @@ impl PhpDataFrame {
 
     /// Check if DataFrame is empty
     pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
+        self.inner.height() == 0
     }
 
     /// Create a copy of the DataFrame
@@ -1099,7 +1099,7 @@ impl PhpDataFrame {
     #[php(name = "toArray")]
     pub fn to_array(&self) -> ExtResult<Vec<HashMap<String, Zval>>> {
         let height = self.inner.height();
-        let columns = self.inner.get_columns();
+        let columns = self.inner.columns();
         let mut result = Vec::with_capacity(height);
 
         for row_idx in 0..height {
@@ -1131,7 +1131,7 @@ impl PhpDataFrame {
                 self.inner.height()
             )));
         }
-        let columns = self.inner.get_columns();
+        let columns = self.inner.columns();
         let mut row = HashMap::new();
         for col_item in columns {
             let col_name = col_item.name().to_string();
@@ -1323,10 +1323,10 @@ impl PhpDataFrame {
         let on_names: Vec<PlSmallStr> = on.into_iter().map(PlSmallStr::from).collect();
         let index_names: Vec<PlSmallStr> = index.into_iter().map(PlSmallStr::from).collect();
         let args = UnpivotArgsDSL {
-            on: Selector::ByName {
+            on: Some(Selector::ByName {
                 names: on_names.into(),
                 strict: false,
-            },
+            }),
             index: Selector::ByName {
                 names: index_names.into(),
                 strict: false,
@@ -1357,7 +1357,13 @@ impl PhpDataFrame {
             .inner
             .clone()
             .lazy()
-            .explode(selector)
+            .explode(
+                selector,
+                polars::prelude::ExplodeOptions {
+                    empty_as_null: true,
+                    keep_nulls: true,
+                },
+            )
             .with_optimizations(OptFlags::EAGER)
             .collect()
             .map_err(|e| PolarsException::new(format!("Explode failed: {}", e)))?;
@@ -1386,7 +1392,7 @@ impl PhpDataFrame {
 
     /// Get a quick summary of the DataFrame
     pub fn glimpse(&self) -> String {
-        let columns = self.inner.get_columns();
+        let columns = self.inner.columns();
         let height = self.inner.height();
         let width = self.inner.width();
         let mut result = format!("Rows: {}\nColumns: {}\n", height, width);
@@ -1466,7 +1472,7 @@ impl PhpDataFrame {
             result_columns.push(Column::new(col_name.clone(), values));
         }
 
-        let inner = DataFrame::new(result_columns)
+        let inner = DataFrame::new_infer_height(result_columns)
             .map_err(|e| PolarsException::new(format!("Describe failed: {}", e)))?;
         Ok(Self { inner })
     }
@@ -1491,7 +1497,7 @@ impl PhpDataFrame {
         let inner = if let Some(frac) = fraction {
             let frac_series = Series::new("frac".into(), &[frac]);
             self.inner
-                .sample_frac(&frac_series, withReplacement, shuffle, seed)
+                .sample_frac(&frac_series, withReplacement, Some(shuffle), seed)
                 .map_err(|e| PolarsException::new(format!("Sample failed: {}", e)))?
         } else {
             if n <= 0 {
@@ -1501,7 +1507,7 @@ impl PhpDataFrame {
             }
             let n_series = Series::new("n".into(), &[n as IdxSize]);
             self.inner
-                .sample_n(&n_series, withReplacement, shuffle, seed)
+                .sample_n(&n_series, withReplacement, Some(shuffle), seed)
                 .map_err(|e| PolarsException::new(format!("Sample failed: {}", e)))?
         };
         Ok(Self { inner })
@@ -1575,7 +1581,7 @@ impl PhpDataFrame {
                 "DataFrame must have exactly 1 column to convert to Series".to_string(),
             ));
         }
-        let col = self.inner.get_columns()[0].clone();
+        let col = self.inner.columns()[0].clone();
         Ok(PhpSeries {
             inner: col.take_materialized_series(),
         })
@@ -1683,7 +1689,7 @@ impl PhpDataFrame {
             .inner
             .get_column_index(&column)
             .ok_or_else(|| PolarsException::new(format!("Column '{}' not found", column)))?;
-        let mut col = self.inner.get_columns()[idx].clone();
+        let mut col = self.inner.columns()[idx].clone();
         col.set_sorted_flag(sorted);
         self.inner
             .replace_column(idx, col)
@@ -1821,7 +1827,7 @@ impl PhpDataFrame {
             .inner
             .clone()
             .lazy()
-            .merge_sorted(other.inner.clone().lazy(), &key)
+            .merge_sorted(other.inner.clone().lazy(), std::iter::once(key), true)
             .map_err(|e| PolarsException::new(format!("mergeSorted failed: {}", e)))?
             .with_optimizations(OptFlags::EAGER)
             .collect()
@@ -1844,17 +1850,19 @@ impl PhpDataFrame {
         aggregateFunction: Option<String>,
         sortColumns: bool,
     ) -> ExtResult<Self> {
+        use polars::frame::PivotColumnNaming;
+        use polars::lazy::dsl::{element, len};
+
         let agg_expr = match aggregateFunction.as_deref() {
-            Some("first") => Some(col("").first()),
-            Some("last") => Some(col("").last()),
-            Some("sum") => Some(col("").sum()),
-            Some("mean") => Some(col("").mean()),
-            Some("median") => Some(col("").median()),
-            Some("min") => Some(col("").min()),
-            Some("max") => Some(col("").max()),
-            Some("count") => Some(col("").count()),
-            Some("len") => Some(col("").len()),
-            None => None,
+            Some("first") | None => element().first(),
+            Some("last") => element().last(),
+            Some("sum") => element().sum(),
+            Some("mean") => element().mean(),
+            Some("median") => element().median(),
+            Some("min") => element().min(),
+            Some("max") => element().max(),
+            Some("count") => element().count(),
+            Some("len") => len(),
             Some(other) => {
                 return Err(PolarsException::new(format!(
                     "Invalid aggregate function: '{}'. Use 'first', 'last', 'sum', 'mean', 'median', 'min', 'max', 'count', or 'len'",
@@ -1862,16 +1870,90 @@ impl PhpDataFrame {
                 )));
             }
         };
-        let inner = polars::lazy::frame::pivot::pivot_stable(
-            &self.inner,
-            on,
-            index,
-            values,
-            sortColumns,
-            agg_expr,
-            None,
-        )
-        .map_err(|e| PolarsException::new(format!("pivot failed: {}", e)))?;
+
+        let all_names: Vec<PlSmallStr> = self
+            .inner
+            .columns()
+            .iter()
+            .map(|c| c.name().clone())
+            .collect();
+        let on_names: Vec<PlSmallStr> = on.iter().map(|s| PlSmallStr::from(s.as_str())).collect();
+        let on_set: std::collections::HashSet<&str> =
+            on.iter().map(|s| s.as_str()).collect();
+        let index_names: Vec<PlSmallStr> = match &index {
+            Some(names) => names.iter().map(|s| PlSmallStr::from(s.as_str())).collect(),
+            None => {
+                let value_set: std::collections::HashSet<&str> = values
+                    .as_ref()
+                    .map(|v| v.iter().map(|s| s.as_str()).collect())
+                    .unwrap_or_default();
+                all_names
+                    .iter()
+                    .filter(|n| !on_set.contains(n.as_str()) && !value_set.contains(n.as_str()))
+                    .cloned()
+                    .collect()
+            }
+        };
+        let value_names: Vec<PlSmallStr> = match &values {
+            Some(names) => names.iter().map(|s| PlSmallStr::from(s.as_str())).collect(),
+            None => {
+                let index_set: std::collections::HashSet<&str> =
+                    index_names.iter().map(|n| n.as_str()).collect();
+                all_names
+                    .iter()
+                    .filter(|n| !on_set.contains(n.as_str()) && !index_set.contains(n.as_str()))
+                    .cloned()
+                    .collect()
+            }
+        };
+
+        let on_selector = Selector::ByName {
+            names: on_names.clone().into(),
+            strict: false,
+        };
+        let mut on_lf = self
+            .inner
+            .clone()
+            .lazy()
+            .select([Expr::Selector(on_selector)]);
+        if sortColumns {
+            on_lf = on_lf.sort(
+                on_names.clone(),
+                SortMultipleOptions::new().with_maintain_order(true),
+            );
+        }
+        let on_df = on_lf
+            .unique(None, UniqueKeepStrategy::First)
+            .with_optimizations(OptFlags::EAGER)
+            .collect()
+            .map_err(|e| PolarsException::new(format!("pivot failed: {}", e)))?;
+
+        let inner = self
+            .inner
+            .clone()
+            .lazy()
+            .pivot(
+                Selector::ByName {
+                    names: on_names.into(),
+                    strict: false,
+                },
+                std::sync::Arc::new(on_df),
+                Selector::ByName {
+                    names: index_names.into(),
+                    strict: false,
+                },
+                Selector::ByName {
+                    names: value_names.into(),
+                    strict: false,
+                },
+                agg_expr,
+                true,
+                PlSmallStr::from_static("_"),
+                PivotColumnNaming::Auto,
+            )
+            .with_optimizations(OptFlags::EAGER)
+            .collect()
+            .map_err(|e| PolarsException::new(format!("pivot failed: {}", e)))?;
         Ok(Self { inner })
     }
 
