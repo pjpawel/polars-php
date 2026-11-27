@@ -27,8 +27,9 @@
     "php-ext": {
         "extension-name": "polars",
         "build-path": "pie",
-        "os-families-exclude": [
-            "windows"
+        "download-url-method": [
+            "pre-packaged-binary",
+            "composer-default"
         ]
     }
 }

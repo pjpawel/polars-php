@@ -83,7 +83,7 @@ The extension is published as a [PIE](https://github.com/php/pie) package on Pac
 pie install pjpawel/polars-php
 ```
 
-PIE downloads the source distribution and runs the standard `phpize` / `./configure` / `make` / `make install` flow. The actual compilation is delegated to `cargo` (see `pie/config.m4` and `pie/Makefile.frag`), so the [Rust toolchain](https://rustup.rs) and the PHP development files (`phpize`) must be installed. When finished, the extension is enabled as `extension=polars` in your `php.ini`.
+On tagged releases, PIE first looks for a pre-built binary asset on the GitHub release (`php_polars-{version}_php{php-version}-{arch}-{os}-{libc}-{nts|zts}.zip`, or `php_polars-{version}-{php-version}-{ts}-{compiler}-{arch}.zip` on Windows, which contains the DLL) and installs that directly; on Windows only the pre-built DLL is used. If no matching asset exists, PIE falls back to building from source: it downloads the source distribution and runs the standard `phpize` / `./configure` / `make` / `make install` flow, delegating the actual compilation to `cargo` (see `pie/config.m4` and `pie/Makefile.frag`), so the [Rust toolchain](https://rustup.rs) and the PHP development files (`phpize`) must be installed in that case. When finished, the extension is enabled as `extension=polars` in your `php.ini`.
 
 Verify with:
 
@@ -94,7 +94,7 @@ php -m | grep polars
 ### Pre-built Binaries
 Pre-built binaries are available for Linux, macOS and Windows.
 There were compiled for PHP 8.3, 8.4, 8.5 and 8.6.
-Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
+Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page, or let [PIE](#install-with-pie-packagist) pick the matching `php_polars-*` asset automatically.
 
 ### Building from Source
 
