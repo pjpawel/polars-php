@@ -10,7 +10,7 @@ Some features are not yet available. Look in GitHub issues for updates.
 
 ### Pre-built Binaries
 Pre-built binaries are available for Linux and macOS.
-There were compiled for PHP 8.3, 8.4 and 8.5.
+There were compiled for PHP 8.3, 8.4, 8.5 and 8.6.
 Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
 
 ### Building from Source

@@ -479,6 +479,20 @@ pub enum PolarsQuantileMethod {
     Equiprobable,
 }
 
+impl ext_php_rs::convert::StubLiteral for PolarsQuantileMethod {
+    fn stub_literal(&self) -> String {
+        let case = match self {
+            PolarsQuantileMethod::Nearest => "Nearest",
+            PolarsQuantileMethod::Lower => "Lower",
+            PolarsQuantileMethod::Higher => "Higher",
+            PolarsQuantileMethod::Midpoint => "Midpoint",
+            PolarsQuantileMethod::Linear => "Linear",
+            PolarsQuantileMethod::Equiprobable => "Equiprobable",
+        };
+        format!("\\Polars\\QuantileMethod::{case}")
+    }
+}
+
 impl From<PolarsQuantileMethod> for QuantileMethod {
     fn from(method: PolarsQuantileMethod) -> Self {
         match method {

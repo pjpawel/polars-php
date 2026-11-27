@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ## 0.6.0
 
+### PHP 8.6 support
+- Build and test the extension for PHP 8.6 in CI (Linux and macOS)
+- Bump `ext-php-rs` from 0.15.10 to 0.16.5 (first release line with PHP 8.6 support)
+- Bump `ethnum` 1.5.2 -> 1.5.3 in Cargo.lock (1.5.2 no longer compiles on stable Rust >= 1.97, E0512 in its error.rs)
+- Fix `DataFrame::writeCsv()` default argument name (`includeHeaders` -> `includeHeader`) to match the parameter name, as required by ext-php-rs 0.16
+- Fix remaining ext-php-rs 0.16 incompatibilities: `PhpException::default()` -> `PhpException::from()` in `DataFrame::setColumns()`, non-exhaustive `ArrayKey` matches in `DataFrame`, and `StubLiteral` impl for `Polars\QuantileMethod` enum used as a parameter default
+- Linux CI: pass `-flax-vector-conversions` via `CFLAGS`/`BINDGEN_EXTRA_CLANG_ARGS` and pin `LIBCLANG_PATH` to the apt default LLVM (`llvm-config --libdir`) — on ubuntu-26.04 clang-sys otherwise loads the newest libclang, which cannot parse the older clang resource headers used by ext-php-rs's bindgen step (xmmintrin.h errors)
+- Fix `DataFrame::setColumns()`: `PhpException::throw()` returns `()` in ext-php-rs 0.16, drop the `.ok()` call
+
 ### Add missing arguments in `LazyFrame` class in methods:
 - `quantile` - add `interpolation` argument
 - `std` and `variance` - change default value from 0 to 1
