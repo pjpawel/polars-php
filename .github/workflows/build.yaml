@@ -143,7 +143,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
-          extensions: none
+          # PIE's PHAR requires mbstring or iconv to be loaded in the CLI PHP
+          extensions: mbstring
           tools: none
 
       - name: Setup Rust
