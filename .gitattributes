@@ -1,0 +1,11 @@
+# Keep the Packagist/PIE source distribution limited to the files needed to
+# build the extension: the Cargo project (Cargo.toml, Cargo.lock, src/,
+# .cargo/), the PIE build wiring (pie/) plus README and LICENSE.
+/.github export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/AGENTS.md export-ignore
+/CHANGELOG.md export-ignore
+/compatibilty export-ignore
+/doc export-ignore
+/php export-ignore

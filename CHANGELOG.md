@@ -37,6 +37,13 @@ All notable changes to this project will be documented in this file.
 - [Feature] Add `Polars\QuantileMethod` enum for quantile interpolation
 - [Feature] Add `Polars\Expr::exclude()` method to exclude columns from multi-column expressions.
 
+### PIE / Packagist distribution
+- [Feature] The extension can now be installed with [PIE](https://github.com/php/pie) from Packagist: `pie install pjpawel/polars-php` (package `pjpawel/polars-php`, `type: php-ext`, provides `ext-polars`)
+- Root `composer.json` with the `php-ext` section (`extension-name: polars`, `build-path: pie`, Windows excluded until pre-built binaries exist); `.gitattributes` `export-ignore` keeps the source archive limited to build inputs
+- New `pie/config.m4` + `pie/Makefile.frag` bridge the `phpize` / `./configure` / `make` flow used by PIE to `cargo build --release`, producing `modules/polars.so`
+- The extension module is now registered as `polars` (previously `polars-php`, which is not a valid PIE extension name), matching `extension_name` in `Cargo.toml`; PIE enables it as `extension=polars`
+- CI: new `pie-build` job verifying `pie build pjpawel/polars-php:*@dev` from a path repository
+
 ## 0.5.0
 
 ### Enhanced existing methods

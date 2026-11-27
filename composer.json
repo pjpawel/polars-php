@@ -1,0 +1,34 @@
+{
+    "name": "pjpawel/polars-php",
+    "description": "Polars DataFrames for PHP as a native PHP extension written in Rust (ext-php-rs)",
+    "type": "php-ext",
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "pjpawel",
+            "email": "pawel.jan.podgorski@gmail.com"
+        }
+    ],
+    "homepage": "https://pjpawel.github.io/polars-php/",
+    "keywords": [
+        "polars",
+        "dataframe",
+        "dataframes",
+        "rust",
+        "extension"
+    ],
+    "require": {
+        "php": "^8.3"
+    },
+    "support": {
+        "issues": "https://github.com/pjpawel/polars-php/issues",
+        "source": "https://github.com/pjpawel/polars-php"
+    },
+    "php-ext": {
+        "extension-name": "polars",
+        "build-path": "pie",
+        "os-families-exclude": [
+            "windows"
+        ]
+    }
+}
