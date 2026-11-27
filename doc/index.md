@@ -9,7 +9,7 @@ Some features are not yet available. Look in GitHub issues for updates.
 ## Installation
 
 ### Pre-built Binaries
-Pre-built binaries are available for Linux and macOS.
+Pre-built binaries are available for Linux, macOS and Windows.
 There were compiled for PHP 8.3, 8.4, 8.5 and 8.6.
 Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
 
@@ -23,8 +23,12 @@ cd polars-php/php
 # Build the extension
 composer build:relese
 
-# Verify installation
+# Verify installation (Linux/macOS)
 php -d extension=../target/release/libpolars_php.so -m | grep polars
+
+# On Windows the extension is a DLL built with the nightly Rust toolchain:
+# cargo +nightly build --release
+php -d extension=..\target\release\polars_php.dll -m
 ```
 
 ## Quick Example
@@ -69,7 +73,7 @@ quantilemethod
 ## Requirements
 
 - PHP 8.3+
-- Linux or macOS (Windows not currently supported)
+- Linux, macOS or Windows (on Windows use the nightly Rust toolchain)
 - Rust toolchain (for building from source)
 
 ## License

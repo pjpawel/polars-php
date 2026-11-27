@@ -15,8 +15,8 @@ A PHP extension bringing the power of [Polars](https://pola.rs/) DataFrames to P
 ## Requirements
 
 - PHP 8.3+
-- Linux or macOS (Windows not currently supported)
-- Rust toolchain (for building from source)
+- Linux, macOS or Windows
+- Rust toolchain (for building from source; on Windows use the nightly toolchain, see below)
 
 ## Documentation
 
@@ -28,7 +28,9 @@ Documentation is available at [https://pjpawel.github.io/polars-php/](https://pj
 <?php
 
 // Load the extension
-// php -d extension=/path/to/libpolars_php.so script.php
+// php -d extension=/path/to/libpolars_php.so script.php   (Linux)
+// php -d extension=/path/to/libpolars_php.dylib script.php (macOS)
+// php -d extension=C:\path\to\polars_php.dll script.php    (Windows)
 // or include extension in php.ini
 
 use Polars\DataFrame;
@@ -75,7 +77,7 @@ $df->min();
 ## Installation
 
 ### Pre-built Binaries
-Pre-built binaries are available for Linux and macOS.
+Pre-built binaries are available for Linux, macOS and Windows.
 There were compiled for PHP 8.3, 8.4, 8.5 and 8.6.
 Download the appropriate binary for your platform from the [releases](https://github.com/pjpawel/polars-php/releases) page.
 
@@ -98,6 +100,36 @@ php -d extension=../target/release/libpolars_php.so -m | grep polars
 # Optional: Run php tests
 composer test:debug
 ```
+
+#### Windows
+
+On Windows the extension builds as `polars_php.dll` and requires:
+
+- the **nightly** Rust toolchain (ext-php-rs uses the unstable `abi_vectorcall` ABI on Windows, see `src/lib.rs`)
+- LLVM installed, so `libclang` is available for the bindgen step:
+
+```powershell
+choco install llvm
+$env:LIBCLANG_PATH = "C:\Program Files\LLVM\bin"
+rustup toolchain install nightly
+```
+
+The PHP development files (headers and `php8.lib`/`php8ts.lib`) are downloaded automatically by the build script, based on the `php` binary found in `PATH`.
+
+```powershell
+# Build (from the repository root)
+cargo +nightly build --release
+
+# Verify installation
+php -d extension=target\release\polars_php.dll -m
+
+# Optional: run the PHPUnit tests (from the php/ directory)
+cd php
+composer install
+php -d extension=..\target\release\polars_php.dll vendor/bin/phpunit tests
+```
+
+The `composer` scripts in `php/composer.json` reference the `.so` file and are intended for Linux/macOS; on Windows pass the DLL path to `php -d extension=` directly, as shown above.
 
 ## Benchmarks
 
