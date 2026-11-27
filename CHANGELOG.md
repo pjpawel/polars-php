@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 - Bump `ethnum` 1.5.2 -> 1.5.3 in Cargo.lock (1.5.2 no longer compiles on stable Rust >= 1.97, E0512 in its error.rs)
 - Fix `DataFrame::writeCsv()` default argument name (`includeHeaders` -> `includeHeader`) to match the parameter name, as required by ext-php-rs 0.16
 - Fix remaining ext-php-rs 0.16 incompatibilities: `PhpException::default()` -> `PhpException::from()` in `DataFrame::setColumns()`, non-exhaustive `ArrayKey` matches in `DataFrame`, and `StubLiteral` impl for `Polars\QuantileMethod` enum used as a parameter default
-- Pass `-flax-vector-conversions` via `CFLAGS`/`BINDGEN_EXTRA_CLANG_ARGS` on Linux CI: clang >= 21 defaults to C23, which rejects the vector->int conversions in clang's own SSE headers when ext-php-rs compiles/binds wrapper.c
+- Linux CI: pass `-flax-vector-conversions` via `CFLAGS`/`BINDGEN_EXTRA_CLANG_ARGS` and pin `LIBCLANG_PATH` to the apt default LLVM (`llvm-config --libdir`) — on ubuntu-26.04 clang-sys otherwise loads the newest libclang, which cannot parse the older clang resource headers used by ext-php-rs's bindgen step (xmmintrin.h errors)
 - Fix `DataFrame::setColumns()`: `PhpException::throw()` returns `()` in ext-php-rs 0.16, drop the `.ok()` call
 
 ### Add missing arguments in `LazyFrame` class in methods:
