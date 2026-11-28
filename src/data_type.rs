@@ -20,3 +20,9 @@ impl From<DataType> for PolarsDataType {
         PolarsDataType(dtype)
     }
 }
+
+impl PolarsDataType {
+    pub(crate) fn inner_dtype(&self) -> DataType {
+        self.0.clone()
+    }
+}
