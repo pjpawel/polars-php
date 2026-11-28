@@ -49,6 +49,8 @@ All notable changes to this project will be documented in this file.
 - New `pie/config.m4` + `pie/Makefile.frag` bridge the `phpize` / `./configure` / `make` flow used by PIE to `cargo build --release`, producing `modules/polars.so`
 - The extension module is now registered as `polars` (previously `polars-php`, which is not a valid PIE extension name), matching `extension_name` in `Cargo.toml`; PIE enables it as `extension=polars`
 - CI: new `pie-build` job verifying `pie build pjpawel/polars-php:*@dev` from a path repository
+- [Feature] Pre-built binary release assets for PIE (`pre-packaged-binary`): the release pipeline now uploads `php_polars-{tag}_php{majmin}-{arch}-{os}-{libc}[-debug]-{nts|zts}.zip` (containing `polars.so`) for Linux/macOS and `php_polars-{tag}-{majmin}-{nts}-{compiler}-{arch}.zip` (containing the DLL) for Windows, so `pie install pjpawel/polars-php` uses a prebuilt binary when one matches the platform and falls back to a source build otherwise (`php-ext.download-url-method: ["pre-packaged-binary", "composer-default"]`)
+- [Feature] Windows PIE assets: PIE-named Windows DLL zips are published on releases, and `os-families-exclude: ["windows"]` was removed from `composer.json`, so `pie install pjpawel/polars-php` works on Windows via the pre-built DLL
 
 ## 0.5.0
 

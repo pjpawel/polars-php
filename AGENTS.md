@@ -138,12 +138,13 @@ Do not add rust tests.
 
 The extension is distributed as a PIE package (`pjpawel/polars-php`, `type: php-ext`, provides `ext-polars`):
 
-- Root `composer.json` declares the `php-ext` section: `extension-name: polars` (the module is registered as `polars` in `src/lib.rs` via `ModuleBuilder::name("polars")`, matching `extension_name` in `Cargo.toml`), `build-path: pie`, and `os-families-exclude: ["windows"]` (no Windows binaries yet)
-- `pie/config.m4` + `pie/Makefile.frag` bridge PIE's `phpize` / `./configure` / `make` / `make install` flow to `cargo build --release` in the repo root; the cdylib (`target/release/libpolars_php.so`, `.dylib` on macOS) is copied to `pie/modules/polars.so`, which the stock `install-modules` target installs as `polars.so`
+- Root `composer.json` declares the `php-ext` section: `extension-name: polars` (the module is registered as `polars` in `src/lib.rs` via `ModuleBuilder::name("polars")`, matching `extension_name` in `Cargo.toml`), `build-path: pie`, and `download-url-method: ["pre-packaged-binary", "composer-default"]` (prebuilt asset first, source build as fallback)
+- `pie/config.m4` + `pie/Makefile.frag` bridge PIE's `phpize` / `./configure` / `make` / `make install` flow to `cargo build --release` in the repo root; the cdylib (`target/release/libpolars_php.so`, `.dylib` on macOS) is copied to `pie/modules/polars.so`, which the stock `install-modules` target installs as `polars.so`. `config.m4` resolves `cargo`/`rustc` via `rustup which` and `Makefile.frag` exports `RUSTC` to cargo so no rustup shims are spawned (they race under `make -j`)
 - `.gitattributes` uses `export-ignore` so the Packagist/PIE source archive contains only build inputs (Cargo files, `src/`, `.cargo/`, `pie/`, README, LICENSE)
 - `php/composer.json` remains the dev/test manifest (PHPUnit, PHPBench) and is not the Packagist package
 - CI job `pie-build` in `.github/workflows/build.yaml` verifies `pie build pjpawel/polars-php:*@dev` via a path repository
 - To test locally before publishing to Packagist: `pie repository:add path .` then `pie build pjpawel/polars-php:*@dev`
+- Prebuilt release assets (PIE `pre-packaged-binary`, names lowercased when matched): Unix zips are `php_polars-{tag}_php{majmin}-{arch}-{os}-{libc}[-debug]-{nts|zts}.zip` containing `polars.so` at the zip root; Windows zips are `php_polars-{tag}-{majmin}-{nts|ts}-{compiler}-{arch}.zip` containing the same-named `.dll` at the root. The `{tag}` token is the release tag verbatim (tags have no `v` prefix). The `build` job writes `dist/build-info.txt` (php/os/arch/libc/ts/debug/compiler) next to the binary, and `create-release` builds the zips from it. Windows builds run on `windows-latest` with nightly Rust (for `abi_vectorcall`) and produce `polars_php.dll`
 
 ## Change Requirements
 

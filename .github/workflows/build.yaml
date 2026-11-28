@@ -15,6 +15,9 @@ jobs:
   build:
     name: Build - ${{ matrix.os }} - PHP ${{ matrix.php }}
     runs-on: ${{ matrix.os }}
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
 
     strategy:
       fail-fast: false
@@ -51,6 +54,9 @@ jobs:
         with:
           toolchain: ${{ matrix.rust-toolchain }}
           targets: ${{ matrix.rust-target }}
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo
         uses: actions/cache@v5
@@ -115,25 +121,71 @@ jobs:
         run: |
           php -d extension=${{ steps.find-extension.outputs.extension_path }} -m
 
-      - name: Rename extension for distribution
+      - name: Detect platform tokens for PIE asset naming
+        id: tokens
         shell: bash
         run: |
+          ARCH=$(uname -m)
+          case "$ARCH" in
+            x86_64|amd64|AMD64) ARCH=x86_64 ;;
+            aarch64|arm64) ARCH=arm64 ;;
+          esac
+          case "${{ runner.os }}" in
+            Linux)   OS=linux;  LIBC=$(ldd --version 2>/dev/null | grep -qi musl && echo musl || echo glibc) ;;
+            macOS)   OS=darwin; LIBC=bsdlibc ;;
+            Windows) OS=windows; LIBC='' ;;
+          esac
+          if php -i | grep -i '^Thread Safety' | grep -qi enabled; then TS=zts; else TS=nts; fi
+          if php -i | grep -i '^Debug Build' | grep -qi 'yes'; then DEBUG=debug; else DEBUG=''; fi
+          COMPILER=''
+          if [ "$OS" = "windows" ]; then
+            COMPILER=$(php -i | grep -oE 'PHP Extension Build => [^,]*,[^,]*,VS[0-9]+' | grep -oE 'VS[0-9]+' | tr 'A-Z' 'a-z')
+          fi
+          {
+            echo "arch=$ARCH"
+            echo "os=$OS"
+            echo "libc=$LIBC"
+            echo "ts=$TS"
+            echo "debug=$DEBUG"
+            echo "compiler=$COMPILER"
+          } >> "$GITHUB_OUTPUT"
+          echo "Tokens: os=$OS arch=$ARCH libc=$LIBC ts=$TS debug=$DEBUG compiler=$COMPILER"
+
+      - name: Prepare distribution artifact
+        shell: bash
+        run: |
+          mkdir -p dist
           EXT_NAME=$(basename ${{ steps.find-extension.outputs.extension_path }})
           BASE_NAME="${EXT_NAME%.*}"
           NEW_NAME="${BASE_NAME}-php${{ matrix.php }}-${{ matrix.os }}.${{ matrix.extension }}"
-          cp ${{ steps.find-extension.outputs.extension_path }} $NEW_NAME
+          cp "${{ steps.find-extension.outputs.extension_path }}" "dist/$NEW_NAME"
           echo "ARTIFACT_NAME=$NEW_NAME" >> $GITHUB_ENV
+          {
+            echo "binary=$NEW_NAME"
+            echo "php=${{ matrix.php }}"
+            echo "os=${{ steps.tokens.outputs.os }}"
+            echo "arch=${{ steps.tokens.outputs.arch }}"
+            echo "libc=${{ steps.tokens.outputs.libc }}"
+            echo "ts=${{ steps.tokens.outputs.ts }}"
+            echo "debug=${{ steps.tokens.outputs.debug }}"
+            echo "compiler=${{ steps.tokens.outputs.compiler }}"
+          } > dist/build-info.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: extension-${{ matrix.os }}-php${{ matrix.php }}
-          path: ${{ env.ARTIFACT_NAME }}
+          path: dist/
           retention-days: 30
 
   pie-build:
     name: PIE build - ubuntu-latest - PHP 8.4
     runs-on: ubuntu-latest
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
+      CARGO_PROFILE_RELEASE_LTO: "false"
+      CARGO_PROFILE_RELEASE_CODEGEN_UNITS: "16"
 
     steps:
       - name: Checkout code
@@ -149,6 +201,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo
         uses: actions/cache@v5
@@ -193,6 +248,9 @@ jobs:
     name: Generate PHP Stubs
     runs-on: ubuntu-latest
     needs: build
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
 
     steps:
       - name: Checkout code
@@ -206,6 +264,9 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Cache Cargo
         uses: actions/cache@v5
@@ -272,17 +333,57 @@ jobs:
             if [ -d "$dir" ]; then
               cd "$dir"
               for file in *; do
+                [ -f "$file" ] || continue
                 zip "../${file}.zip" "$file"
               done
               cd ..
             fi
           done
 
+      # PIE (pre-packaged-binary) asset names, lowercased by PIE when matching:
+      #   Unix:    php_polars-{tag}_php{majmin}-{arch}-{os}-{libc}[-debug]-{nts|zts}.zip
+      #            containing polars.so at the zip root
+      #   Windows: php_polars-{tag}-{majmin}-{nts|ts}-{compiler}-{arch}.zip
+      #            containing php_polars-{tag}-{majmin}-{nts|ts}-{compiler}-{arch}.dll at the zip root
+      - name: Create PIE prebuilt binary assets
+        shell: bash
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          echo "Release tag (PIE version token): $TAG"
+          mkdir -p pie-assets
+          cd artifacts
+          for dir in extension-*; do
+            [ -d "$dir" ] || continue
+            info="$dir/build-info.txt"
+            [ -f "$info" ] || continue
+            # shellcheck disable=SC1090
+            source "$info"
+            EXT_FILE=$(find "$dir" -maxdepth 1 -type f \( -name '*.so' -o -name '*.dylib' -o -name '*.dll' \) | head -n 1)
+            [ -n "$EXT_FILE" ] || { echo "No binary in $dir, skipping"; continue; }
+            stage="../pie-assets/$dir"
+            mkdir -p "$stage"
+            if [ "$os" = "windows" ]; then
+              BASE="php_polars-${TAG}-${php}-${ts}-${compiler}-${arch}"
+              cp "$EXT_FILE" "$stage/${BASE}.dll"
+              (cd "$stage" && zip "${BASE}.zip" "${BASE}.dll")
+              echo "Created $stage/${BASE}.zip"
+            else
+              DEBUG_SUFFIX=""; [ -n "$debug" ] && DEBUG_SUFFIX="-${debug}"
+              BASE="php_polars-${TAG}_php${php}-${arch}-${os}-${libc}${DEBUG_SUFFIX}-${ts}"
+              cp "$EXT_FILE" "$stage/polars.so"
+              (cd "$stage" && zip "${BASE}.zip" polars.so)
+              echo "Created $stage/${BASE}.zip"
+            fi
+          done
+          cd ..
+          ls -la pie-assets/*/
+
       - name: Upload release assets
         uses: softprops/action-gh-release@v1
         with:
           files: |
             artifacts/*.zip
+            pie-assets/*/*.zip
             artifacts/php-stubs/stubs.php
             artifacts/benchmark-results/results.xml
             artifacts/benchmark-results/comparison.md
